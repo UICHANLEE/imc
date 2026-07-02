@@ -1,0 +1,205 @@
+import { Component, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { Excalidraw } from "@excalidraw/excalidraw";
+import "@excalidraw/excalidraw/index.css";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import type { Card, DocPage, DocType, Project } from "../types";
+import { getProject, markdownToBlocks } from "../utils";
+
+type DocsViewProps = {
+  docs: DocPage[];
+  cards: Card[];
+  projects: Project[];
+  selectedDocId: string;
+  onSelectDoc: (docId: string) => void;
+  onNewPage: (type: DocType) => void;
+  onUpdateDoc: (docId: string, patch: Partial<DocPage>) => void;
+};
+
+export function DocsView({ docs, cards, projects, selectedDocId, onSelectDoc, onNewPage, onUpdateDoc }: DocsViewProps) {
+  const selectedDoc = docs.find((doc) => doc.id === selectedDocId) ?? docs[0];
+  const linkedCards = cards.filter((card) => selectedDoc.cardIds.includes(card.id));
+  const project = getProject(projects, selectedDoc.projectId);
+
+  return (
+    <section>
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Confluence + Excalidraw Docs</p>
+          <h2>문서 허브</h2>
+          <p className="section-subtitle">Confluence처럼 문서를 쓰고, Excalidraw 원본 편집기를 그대로 사용합니다.</p>
+        </div>
+        <div className="doc-actions">
+          <button className="ghost-button" onClick={() => onNewPage("markdown")}>Markdown 문서</button>
+          <button className="ghost-button" onClick={() => onNewPage("canvas")}>Excalidraw 문서</button>
+        </div>
+      </div>
+
+      <div className="docs-workspace">
+        <aside className="doc-sidebar">
+          {docs.map((doc) => {
+            const itemProject = getProject(projects, doc.projectId);
+            return (
+              <button className={`doc-list-item ${doc.id === selectedDoc.id ? "active" : ""}`} key={doc.id} onClick={() => onSelectDoc(doc.id)}>
+                <i style={{ background: itemProject.color }} />
+                <span>{doc.title}</span>
+                <small>{doc.type === "canvas" ? "excalidraw" : "markdown"}</small>
+              </button>
+            );
+          })}
+        </aside>
+
+        <article className="doc-editor-shell" style={{ "--project-color": project.color } as CSSProperties}>
+          <header className="doc-editor-header">
+            <div>
+              <p className="issue-key"><i style={{ background: project.color }} />{project.name}</p>
+              <input className="doc-title-input" value={selectedDoc.title} onChange={(event) => onUpdateDoc(selectedDoc.id, { title: event.target.value })} />
+            </div>
+            <select value={selectedDoc.type} onChange={(event) => onUpdateDoc(selectedDoc.id, { type: event.target.value as DocType })}>
+              <option value="markdown">Markdown</option>
+              <option value="canvas">Excalidraw</option>
+            </select>
+          </header>
+
+          <div className="doc-linked-row">
+            {linkedCards.map((card) => <span className="chip" key={card.id}>{card.id} · {card.title}</span>)}
+          </div>
+
+          {selectedDoc.type === "markdown" ? (
+            <MarkdownEditor doc={selectedDoc} onUpdateDoc={onUpdateDoc} />
+          ) : (
+            <CanvasErrorBoundary key={selectedDoc.id}>
+              <ExcalidrawEditor doc={selectedDoc} projectColor={project.color} onUpdateDoc={onUpdateDoc} />
+            </CanvasErrorBoundary>
+          )}
+        </article>
+      </div>
+    </section>
+  );
+}
+
+class CanvasErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; message: string }> {
+  state = { hasError: false, message: "" };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, message: error.message };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("Excalidraw render failed", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="excalidraw-fallback">
+          <h3>Excalidraw 캔버스를 불러오지 못했어요.</h3>
+          <p>앱은 계속 사용할 수 있습니다. 새로고침 후 다시 시도하거나, 아래 링크로 Excalidraw 원본 에디터를 열어 작업하세요.</p>
+          {this.state.message && <code>{this.state.message}</code>}
+          <a href="https://excalidraw.com/" target="_blank" rel="noreferrer">Excalidraw 원본 열기</a>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function MarkdownEditor({ doc, onUpdateDoc }: { doc: DocPage; onUpdateDoc: (docId: string, patch: Partial<DocPage>) => void }) {
+  return (
+    <div className="markdown-layout">
+      <textarea
+        className="markdown-input"
+        value={doc.body}
+        onChange={(event) => onUpdateDoc(doc.id, { body: event.target.value })}
+        placeholder="# 제목&#10;&#10;- 해야 할 일&#10;- [ ] 체크리스트"
+      />
+      <div className="markdown-preview">
+        {markdownToBlocks(doc.body).map((block) => {
+          if (block.type === "space") return <br key={block.id} />;
+          if (block.type === "h1") return <h1 key={block.id}>{block.text}</h1>;
+          if (block.type === "h2") return <h2 key={block.id}>{block.text}</h2>;
+          if (block.type === "h3") return <h3 key={block.id}>{block.text}</h3>;
+          if (block.type === "li") return <p className="md-list" key={block.id}>• {block.text}</p>;
+          if (block.type === "checked") return <p className="md-check done" key={block.id}>✓ {block.text}</p>;
+          if (block.type === "todo") return <p className="md-check" key={block.id}>□ {block.text}</p>;
+          return <p key={block.id}>{block.text}</p>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ExcalidrawEditor({ doc, projectColor, onUpdateDoc }: {
+  doc: DocPage;
+  projectColor: string;
+  onUpdateDoc: (docId: string, patch: Partial<DocPage>) => void;
+}) {
+  const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
+  const [savedMessage, setSavedMessage] = useState("아직 저장 전");
+  const scene = doc.excalidrawData ?? { elements: [], appState: { viewBackgroundColor: "#ffffff" }, files: {} };
+
+  function saveScene() {
+    const api = apiRef.current;
+    if (!api) return;
+
+    const appState = api.getAppState();
+    onUpdateDoc(doc.id, {
+      excalidrawData: {
+        elements: api.getSceneElements() as readonly unknown[],
+        appState: {
+          viewBackgroundColor: appState.viewBackgroundColor,
+          gridSize: appState.gridSize,
+          scrollX: appState.scrollX,
+          scrollY: appState.scrollY,
+          zoom: appState.zoom
+        } as Record<string, unknown>,
+        files: api.getFiles() as unknown as Record<string, unknown>
+      }
+    });
+    setSavedMessage(`저장됨 · ${new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`);
+  }
+
+  return (
+    <div className="excalidraw-shell">
+      <div className="excalidraw-note">
+        <div>
+          <span style={{ background: projectColor }} />
+          실제 Excalidraw 컴포넌트입니다. 도형, 펜, 화살표, 텍스트, 이미지, 라이브러리, 내보내기 기능을 사용할 수 있습니다.
+        </div>
+        <div className="excalidraw-save-actions">
+          <small>{savedMessage}</small>
+          <button className="text-button" onClick={saveScene}>캔버스 저장</button>
+        </div>
+      </div>
+      <div className="excalidraw-host">
+        <Excalidraw
+          key={doc.id}
+          excalidrawAPI={(api) => {
+            apiRef.current = api;
+          }}
+          initialData={{
+            elements: scene.elements as never[],
+            appState: getInitialExcalidrawAppState(scene.appState) as never,
+            files: scene.files as never
+          }}
+          name={doc.title}
+          langCode="ko-KR"
+          theme="light"
+          gridModeEnabled
+          autoFocus
+        />
+      </div>
+    </div>
+  );
+}
+
+function getInitialExcalidrawAppState(appState?: Record<string, unknown>) {
+  return {
+    viewBackgroundColor: typeof appState?.viewBackgroundColor === "string" ? appState.viewBackgroundColor : "#ffffff",
+    gridSize: typeof appState?.gridSize === "number" ? appState.gridSize : undefined,
+    scrollX: typeof appState?.scrollX === "number" ? appState.scrollX : undefined,
+    scrollY: typeof appState?.scrollY === "number" ? appState.scrollY : undefined,
+    zoom: typeof appState?.zoom === "object" && appState.zoom !== null ? appState.zoom : undefined
+  };
+}

@@ -1,0 +1,106 @@
+import type { FormEvent } from "react";
+import { assignees, categories, issueTypes, priorities } from "../data";
+import type { Category, IssueType, Priority, Project } from "../types";
+
+type SidebarProps = {
+  projects: Project[];
+  onCreateProject: (name: string, color: string) => void;
+  onCreateCard: (input: {
+    title: string;
+    projectId: string;
+    category: Category;
+    issueType: IssueType;
+    priority: Priority;
+    assignee: string;
+    storyPoints: number;
+    minutes: number;
+  }) => void;
+};
+
+export function Sidebar({ projects, onCreateProject, onCreateCard }: SidebarProps) {
+  function submitCard(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const title = String(form.get("title") ?? "").trim();
+    const projectId = String(form.get("projectId"));
+    const category = String(form.get("category")) as Category;
+    const issueType = String(form.get("issueType")) as IssueType;
+    const priority = String(form.get("priority")) as Priority;
+    const assignee = String(form.get("assignee"));
+    const storyPoints = Number(form.get("storyPoints"));
+    const minutes = Number(form.get("minutes"));
+    if (!title) return;
+    onCreateCard({ title, projectId, category, issueType, priority, assignee, storyPoints, minutes });
+    event.currentTarget.reset();
+  }
+
+  function submitProject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("projectName") ?? "").trim();
+    const color = String(form.get("projectColor") ?? "#0c66e4");
+    if (!name) return;
+    onCreateProject(name, color);
+    event.currentTarget.reset();
+  }
+
+  return (
+    <aside className="sidebar">
+      <div className="brand">
+        <div className="brand-mark">IMC</div>
+        <div>
+          <strong>It's My Calendar</strong>
+          <span>plan, focus, record</span>
+        </div>
+      </div>
+
+      <section className="quick-capture">
+        <h2>빠른 카드 생성</h2>
+        <form onSubmit={submitCard}>
+          <input name="title" type="text" placeholder="카드 제목" autoComplete="off" required />
+          <div className="form-grid">
+            <select name="issueType" aria-label="이슈 타입">
+              {issueTypes.map((type) => <option key={type}>{type}</option>)}
+            </select>
+            <select name="priority" aria-label="우선순위">
+              {priorities.map((priority) => <option key={priority}>{priority}</option>)}
+            </select>
+          </div>
+          <select name="projectId" aria-label="프로젝트">
+            {projects.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}
+          </select>
+          <select name="category" aria-label="카테고리">
+            {categories.map((category) => <option key={category}>{category}</option>)}
+          </select>
+          <select name="assignee" aria-label="담당자">
+            {assignees.map((assignee) => <option key={assignee}>{assignee}</option>)}
+          </select>
+          <div className="form-row">
+            <input name="minutes" type="number" min="15" max="240" step="15" defaultValue="60" aria-label="예상 시간" />
+            <input name="storyPoints" type="number" min="1" max="13" step="1" defaultValue="3" aria-label="스토리 포인트" />
+            <button type="submit">발행</button>
+          </div>
+        </form>
+      </section>
+
+      <section className="project-capture">
+        <h2>프로젝트 커스텀</h2>
+        <form onSubmit={submitProject}>
+          <input name="projectName" type="text" placeholder="프로젝트 이름" autoComplete="off" />
+          <div className="project-form-row">
+            <input name="projectColor" type="color" defaultValue="#0c66e4" aria-label="프로젝트 색상" />
+            <button type="submit">추가</button>
+          </div>
+        </form>
+        <div className="project-list">
+          {projects.map((project) => (
+            <span className="project-pill" key={project.id}>
+              <i style={{ background: project.color }} />
+              {project.name}
+            </span>
+          ))}
+        </div>
+      </section>
+    </aside>
+  );
+}
