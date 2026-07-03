@@ -33,10 +33,23 @@ export function CardDetail({ card, doc, docs, projects, timer, onStart, onReset,
             {card.priority} priority
           </div>
         </div>
-        <span className="avatar large" title={`Assignee: ${card.assignee}`}>{getInitials(card.assignee)}</span>
+        <div className="issue-actions">
+          <button>Watch</button>
+          <button>Share</button>
+          <button>•••</button>
+          <span className="avatar large" title={`Assignee: ${card.assignee}`}>{getInitials(card.assignee)}</span>
+        </div>
       </div>
 
       <div className="detail-body">
+        <section className="jira-description-block">
+          <div className="panel-title">
+            <h3>Description</h3>
+            <button className="text-button">Edit</button>
+          </div>
+          <p>{card.description}</p>
+        </section>
+
         <section className="field-grid">
           <Field label="Title">
             <input value={card.title} onChange={(event) => onUpdate(card.id, { title: event.target.value })} />
@@ -136,6 +149,24 @@ export function CardDetail({ card, doc, docs, projects, timer, onStart, onReset,
             <span className="chip">Sprint: {card.sprint}</span>
             <span className="chip">Reporter: {card.reporter}</span>
             <span className="chip">Updated: {card.updatedAt}</span>
+          </div>
+        </section>
+
+        <section className="activity-panel">
+          <div className="panel-title">
+            <h3>Activity</h3>
+            <div className="activity-tabs">
+              <button className="active">Comments</button>
+              <button>History</button>
+              <button>Work log</button>
+            </div>
+          </div>
+          <div className="activity-comment">
+            <span className="avatar">UI</span>
+            <div>
+              <strong>Uichan</strong>
+              <p>Confluence 페이지와 Jira 카드가 연결되었습니다. 진행상황은 이슈 상태와 문서 링크를 기준으로 추적합니다.</p>
+            </div>
           </div>
         </section>
       </div>

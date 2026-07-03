@@ -336,12 +336,34 @@ export default function App() {
         selectedProjectId={selectedProject.id}
         cards={state.cards}
         docs={state.docs}
+        view={view}
+        onViewChange={setView}
         onSelectProject={setSelectedProjectId}
         onCreateProject={createProject}
         onCreateCard={createCard}
       />
 
       <main className="main">
+        <header className="global-product-bar">
+          <div className="global-left">
+            <div className="app-switcher" aria-hidden="true">::</div>
+            <strong>Atlassian</strong>
+            <button className={view === "jira" ? "active" : ""} onClick={() => setView("jira")}>Jira</button>
+            <button className={view === "confluence" ? "active" : ""} onClick={() => setView("confluence")}>Confluence</button>
+            <button>Projects</button>
+            <button>Filters</button>
+            <button>Dashboards</button>
+            <button>Teams</button>
+            <button>Apps</button>
+            <button className="create-work-button" onClick={() => setView("jira")}>Create</button>
+          </div>
+          <div className="global-right">
+            <input aria-label="Search" placeholder="Search" />
+            <button aria-label="Help">?</button>
+            <button aria-label="Settings">⚙</button>
+            <span className="avatar">UI</span>
+          </div>
+        </header>
         <header className="topbar">
           <div>
             <p className="eyebrow">It's My Calendar</p>

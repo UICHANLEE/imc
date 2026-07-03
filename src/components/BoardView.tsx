@@ -47,10 +47,17 @@ export function BoardView({
 
   return (
     <section className="board-panel">
-      <div className="project-product-header" style={{ "--project-color": project.color } as CSSProperties}>
+      <div className="jira-breadcrumb">
+        <span>Projects</span>
+        <b>/</b>
+        <span>{project.name}</span>
+        <b>/</b>
+        <strong>Board</strong>
+      </div>
+      <div className="project-product-header jira-project-header" style={{ "--project-color": project.color } as CSSProperties}>
         <div>
           <p className="eyebrow">Jira</p>
-          <h2>{project.name} Jira Board</h2>
+          <h2>{project.name}</h2>
           <p className="section-subtitle">{cards.length}/{totalCards} cards · {visiblePoints} story points · {doneCount} done · Confluence 문서 자동 연결</p>
         </div>
         <div className="project-header-actions">
@@ -62,7 +69,22 @@ export function BoardView({
           <button className="ghost-button" onClick={onAutoSchedule}>자동 배치</button>
         </div>
       </div>
-      <div className="board-toolbar">
+      <div className="jira-view-tabs">
+        {["Summary", "Timeline", "Backlog", "Board", "List", "Calendar", "Forms", "Goals"].map((item) => (
+          <button
+            key={item}
+            className={item.toLowerCase() === mode || item === "Board" && mode === "board" ? "active" : ""}
+            onClick={() => {
+              if (item === "Board") setMode("board");
+              if (item === "List") setMode("list");
+              if (item === "Timeline") setMode("timeline");
+            }}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+      <div className="board-toolbar jira-board-toolbar">
         <input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="이슈 키, 제목, 라벨 검색" aria-label="이슈 검색" />
         <select value={issueTypeFilter} onChange={(event) => onIssueTypeFilterChange(event.target.value as "All" | IssueType)} aria-label="이슈 타입 필터">
           <option>All</option>
@@ -74,8 +96,19 @@ export function BoardView({
         </select>
       </div>
       {mode === "board" && (
-        <div className="kanban-board" aria-label="카드 보드">
-          {columns.map((column) => {
+        <div className="jira-sprint-shell">
+          <div className="sprint-header">
+            <div>
+              <strong>IMC Sprint 1</strong>
+              <span>{cards.length} work items</span>
+            </div>
+            <div>
+              <button className="ghost-button">Complete sprint</button>
+              <button className="ghost-button">•••</button>
+            </div>
+          </div>
+          <div className="kanban-board" aria-label="카드 보드">
+            {columns.map((column) => {
             const columnCards = cards.filter((card) => card.status === column.key);
             const points = columnCards.reduce((sum, card) => sum + card.storyPoints, 0);
             const isOverLimit = column.wipLimit !== undefined && columnCards.length > column.wipLimit;
@@ -119,7 +152,8 @@ export function BoardView({
                 ))}
               </section>
             );
-          })}
+            })}
+          </div>
         </div>
       )}
 

@@ -1211,7 +1211,7 @@ h2 {
 
 .doc-editor-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
   padding: 16px;
@@ -1761,6 +1761,376 @@ h2 {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
+}
+
+.global-product-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin: -20px -24px 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 8px 20px;
+  backdrop-filter: blur(14px);
+}
+
+.global-left,
+.global-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.global-left strong {
+  margin-right: 8px;
+  color: #0f172a;
+}
+
+.global-product-bar button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #44546f;
+  padding: 7px 9px;
+  font-weight: 800;
+}
+
+.global-product-bar button.active,
+.global-product-bar button:hover {
+  background: #e9f2ff;
+  color: var(--primary);
+}
+
+.app-switcher {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #f1f2f4;
+  color: #44546f;
+  font-weight: 900;
+}
+
+.create-work-button {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+.global-right input {
+  width: 230px;
+  height: 34px;
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+
+.product-menu {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.product-menu button,
+.space-nav button {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #44546f;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 800;
+}
+
+.product-menu button.active,
+.space-nav button.active,
+.product-menu button:hover,
+.space-nav button:hover {
+  background: #e9f2ff;
+  color: var(--primary);
+}
+
+.space-nav {
+  display: grid;
+  gap: 3px;
+  margin-top: 12px;
+}
+
+.mini-tree {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.mini-tree span {
+  display: block;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sprint-summary {
+  margin-top: 14px;
+}
+
+.sprint-meter {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dfe1e6;
+}
+
+.sprint-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+}
+
+.jira-breadcrumb,
+.confluence-breadcrumb {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.jira-project-header {
+  border-bottom-width: 2px;
+}
+
+.jira-project-header h2 {
+  color: #172b4d;
+  font-size: 28px;
+}
+
+.jira-view-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.jira-view-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #44546f;
+  padding: 10px 11px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.jira-view-tabs button.active,
+.jira-view-tabs button:hover {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+
+.jira-board-toolbar {
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.jira-sprint-shell {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f8f9;
+  padding: 12px;
+}
+
+.sprint-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.sprint-header strong,
+.sprint-header span {
+  display: block;
+}
+
+.sprint-header span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sprint-header > div:last-child {
+  display: flex;
+  gap: 8px;
+}
+
+.issue-actions {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.issue-actions button {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f7f8f9;
+  color: #44546f;
+  padding: 7px 9px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.jira-description-block,
+.activity-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 14px;
+}
+
+.jira-description-block p {
+  margin: 0;
+  color: #44546f;
+  line-height: 1.6;
+}
+
+.activity-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.activity-tabs button {
+  border: 0;
+  border-radius: 999px;
+  background: #f1f2f4;
+  color: #44546f;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.activity-tabs button.active {
+  background: #e9f2ff;
+  color: var(--primary);
+}
+
+.activity-comment {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.activity-comment p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.confluence-breadcrumb {
+  margin: 14px 16px 0;
+}
+
+.confluence-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.confluence-actions button,
+.publish-button {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  color: #44546f;
+  padding: 9px 11px;
+  font-weight: 900;
+}
+
+.publish-button {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+.confluence-editor-toolbar {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  background: #ffffff;
+  padding: 8px 16px;
+}
+
+.confluence-editor-toolbar button {
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #44546f;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.confluence-editor-toolbar button:hover {
+  border-color: var(--line);
+  background: #f7f8f9;
+}
+
+.confluence-page-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  min-height: 680px;
+  background: white;
+}
+
+.confluence-page-body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 46px 56px;
+}
+
+.slash-command {
+  margin-top: 28px !important;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: #f7f8f9;
+  color: var(--muted) !important;
+  padding: 12px;
+}
+
+.markdown-source-panel {
+  border-left: 1px solid var(--line);
+  background: #fafbfc;
+  padding: 14px;
+}
+
+.markdown-source-panel strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #44546f;
+  font-size: 12px;
+}
+
+.markdown-source-panel .markdown-input {
+  min-height: 570px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
 }
 
 @media (max-width: 1200px) {

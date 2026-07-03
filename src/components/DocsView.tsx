@@ -52,16 +52,34 @@ export function DocsView({ docs, cards, projects, selectedProjectId, selectedDoc
         </aside>
 
         <article className="doc-editor-shell" style={{ "--project-color": project.color } as CSSProperties}>
+          <div className="confluence-breadcrumb">
+            <span>Spaces</span>
+            <b>/</b>
+            <span>{project.name}</span>
+            <b>/</b>
+            <strong>{selectedDoc.title}</strong>
+          </div>
           <header className="doc-editor-header">
             <div>
               <p className="issue-key"><i style={{ background: project.color }} />{project.name}</p>
               <input className="doc-title-input" value={selectedDoc.title} onChange={(event) => onUpdateDoc(selectedDoc.id, { title: event.target.value })} />
             </div>
-            <select value={selectedDoc.type} onChange={(event) => onUpdateDoc(selectedDoc.id, { type: event.target.value as DocType })}>
-              <option value="markdown">Markdown</option>
-              <option value="canvas">Excalidraw</option>
-            </select>
+            <div className="confluence-actions">
+              <select value={selectedDoc.type} onChange={(event) => onUpdateDoc(selectedDoc.id, { type: event.target.value as DocType })}>
+                <option value="markdown">Page</option>
+                <option value="canvas">Whiteboard</option>
+              </select>
+              <button>Share</button>
+              <button>Watch</button>
+              <button className="publish-button">Publish</button>
+            </div>
           </header>
+
+          <div className="confluence-editor-toolbar">
+            {["Normal text", "Bold", "Italic", "Link", "Bullet list", "Task", "Table", "Mention", "More"].map((item) => (
+              <button key={item}>{item}</button>
+            ))}
+          </div>
 
           <div className="doc-linked-row">
             <strong>Linked Jira cards</strong>
@@ -139,14 +157,8 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 
 function MarkdownEditor({ doc, onUpdateDoc }: { doc: DocPage; onUpdateDoc: (docId: string, patch: Partial<DocPage>) => void }) {
   return (
-    <div className="markdown-layout">
-      <textarea
-        className="markdown-input"
-        value={doc.body}
-        onChange={(event) => onUpdateDoc(doc.id, { body: event.target.value })}
-        placeholder="# 제목&#10;&#10;- 해야 할 일&#10;- [ ] 체크리스트"
-      />
-      <div className="markdown-preview">
+    <div className="confluence-page-editor">
+      <div className="markdown-preview confluence-page-body">
         {markdownToBlocks(doc.body).map((block) => {
           if (block.type === "space") return <br key={block.id} />;
           if (block.type === "h1") return <h1 key={block.id}>{block.text}</h1>;
@@ -157,6 +169,16 @@ function MarkdownEditor({ doc, onUpdateDoc }: { doc: DocPage; onUpdateDoc: (docI
           if (block.type === "todo") return <p className="md-check" key={block.id}>□ {block.text}</p>;
           return <p key={block.id}>{block.text}</p>;
         })}
+        <p className="slash-command">Type / to insert elements, mention people, add Jira work, or create a table.</p>
+      </div>
+      <div className="markdown-source-panel">
+        <strong>Markdown source</strong>
+        <textarea
+          className="markdown-input"
+          value={doc.body}
+          onChange={(event) => onUpdateDoc(doc.id, { body: event.target.value })}
+          placeholder="# 제목&#10;&#10;- 해야 할 일&#10;- [ ] 체크리스트"
+        />
       </div>
     </div>
   );

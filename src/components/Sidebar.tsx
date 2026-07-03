@@ -1,12 +1,14 @@
 import type { FormEvent } from "react";
 import { assignees, categories, issueTypes, priorities } from "../data";
-import type { Card, Category, DocPage, IssueType, Priority, Project } from "../types";
+import type { Card, Category, DocPage, IssueType, Priority, Project, View } from "../types";
 
 type SidebarProps = {
   projects: Project[];
   selectedProjectId: string;
   cards: Card[];
   docs: DocPage[];
+  view: View;
+  onViewChange: (view: View) => void;
   onSelectProject: (projectId: string) => void;
   onCreateProject: (name: string, color: string) => void;
   onCreateCard: (input: {
@@ -21,7 +23,11 @@ type SidebarProps = {
   }) => void;
 };
 
-export function Sidebar({ projects, selectedProjectId, cards, docs, onSelectProject, onCreateProject, onCreateCard }: SidebarProps) {
+export function Sidebar({ projects, selectedProjectId, cards, docs, view, onViewChange, onSelectProject, onCreateProject, onCreateCard }: SidebarProps) {
+  const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
+  const selectedProjectCards = cards.filter((card) => card.projectId === selectedProjectId);
+  const selectedProjectDocs = docs.filter((doc) => doc.projectId === selectedProjectId);
+
   function submitCard(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -53,10 +59,15 @@ export function Sidebar({ projects, selectedProjectId, cards, docs, onSelectProj
       <div className="brand">
         <div className="brand-mark">IMC</div>
         <div>
-          <strong>It's My Calendar</strong>
-          <span>project operating system</span>
+          <strong>{view === "confluence" ? "Confluence" : "Jira"}</strong>
+          <span>{selectedProject.name}</span>
         </div>
       </div>
+
+      <section className="sidebar-section product-menu">
+        <button className={view === "jira" ? "active" : ""} onClick={() => onViewChange("jira")}>Jira software</button>
+        <button className={view === "confluence" ? "active" : ""} onClick={() => onViewChange("confluence")}>Confluence space</button>
+      </section>
 
       <section className="sidebar-section project-switcher">
         <div className="sidebar-title">
@@ -83,6 +94,35 @@ export function Sidebar({ projects, selectedProjectId, cards, docs, onSelectProj
           })}
         </div>
       </section>
+
+      {view === "jira" && (
+        <section className="sidebar-section space-nav">
+          <div className="sidebar-title">
+            <h2>Project</h2>
+            <span>{selectedProject.key}</span>
+          </div>
+          {["Summary", "Timeline", "Board", "List", "Calendar", "Issues", "Reports", "Project settings"].map((item) => (
+            <button key={item} className={item === "Board" ? "active" : ""}>{item}</button>
+          ))}
+        </section>
+      )}
+
+      {view === "confluence" && (
+        <section className="sidebar-section space-nav confluence-tree">
+          <div className="sidebar-title">
+            <h2>Space</h2>
+            <span>{selectedProjectDocs.length}</span>
+          </div>
+          {["Overview", "Recent", "Pages", "Whiteboards", "Databases", "Blog", "Space settings"].map((item) => (
+            <button key={item} className={item === "Pages" ? "active" : ""}>{item}</button>
+          ))}
+          <div className="mini-tree">
+            {selectedProjectDocs.slice(0, 5).map((doc) => (
+              <span key={doc.id}>{doc.type === "canvas" ? "Whiteboard" : "Page"} · {doc.title}</span>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="quick-capture">
         <div className="sidebar-title">
@@ -116,6 +156,18 @@ export function Sidebar({ projects, selectedProjectId, cards, docs, onSelectProj
           </div>
         </form>
       </section>
+
+      {view === "jira" && (
+        <section className="sidebar-section sprint-summary">
+          <div className="sidebar-title">
+            <h2>Active sprint</h2>
+            <span>{selectedProjectCards.length} work items</span>
+          </div>
+          <div className="sprint-meter">
+            <i style={{ width: `${Math.min(100, selectedProjectCards.filter((card) => card.status === "done").length / Math.max(1, selectedProjectCards.length) * 100)}%` }} />
+          </div>
+        </section>
+      )}
 
       <section className="project-capture">
         <div className="sidebar-title">
