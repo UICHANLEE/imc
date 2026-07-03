@@ -20,7 +20,7 @@ type InteractionState = {
 } | null;
 
 export default function App() {
-  const [view, setView] = useState<View>("workspace");
+  const [view, setView] = useState<View>("jira");
   const [state, setState] = usePersistentState<AppState>(storageKey, initialState);
   const [selectedProjectId, setSelectedProjectId] = useState(initialState.projects[0].id);
   const [selectedCardId, setSelectedCardId] = useState(initialState.cards[0].id);
@@ -82,14 +82,16 @@ export default function App() {
   function updateCard(cardId: string, patch: Partial<Card>) {
     setState((current) => ({
       ...current,
-      cards: current.cards.map((card) => card.id === cardId ? { ...card, ...patch } : card)
+      cards: current.cards.map((card) => card.id === cardId ? { ...card, ...patch } : card),
+      docs: syncDocsFromCardPatch(current.docs, current.cards.find((card) => card.id === cardId), patch)
     }));
   }
 
   function updateDoc(docId: string, patch: Partial<DocPage>) {
     setState((current) => ({
       ...current,
-      docs: current.docs.map((doc) => doc.id === docId ? { ...doc, ...patch } : doc)
+      docs: current.docs.map((doc) => doc.id === docId ? { ...doc, ...patch } : doc),
+      cards: syncCardsFromDocPatch(current.cards, current.docs.find((doc) => doc.id === docId), patch)
     }));
   }
 
@@ -206,7 +208,7 @@ export default function App() {
     setState((current) => ({
       ...current,
       cards: current.cards.map((card) => {
-        if (card.day !== null) return card;
+        if (card.projectId !== selectedProject.id || card.day !== null) return card;
         const scheduled = { ...card, day, start: hour };
         hour += Math.ceil(card.minutes / 60);
         if (hour >= 17) {
@@ -344,7 +346,7 @@ export default function App() {
           <div>
             <p className="eyebrow">It's My Calendar</p>
             <h1>{selectedProject.name}</h1>
-            <p className="topbar-subtitle">Jira식 이슈 관리, Confluence식 문서 공간, 주간 플래너를 하나의 프로젝트 컨텍스트에서 운영합니다.</p>
+            <p className="topbar-subtitle">Jira 카드와 Confluence 문서를 분리된 탭에서 관리하고, 링크된 이슈와 페이지는 자동으로 동기화됩니다.</p>
           </div>
           <div className="topbar-actions">
             <div className="today-chip">
@@ -366,7 +368,7 @@ export default function App() {
           </div>
         )}
 
-        {view === "workspace" && (
+        {view === "jira" && (
           <section className="workspace-grid">
             <BoardView
               cards={visibleCards}
@@ -398,7 +400,7 @@ export default function App() {
               onToggleSubtask={toggleSubtask}
               onOpenDoc={(docId) => {
                 setSelectedDocId(docId);
-                setView("docs");
+                setView("confluence");
               }}
             />
           </section>
@@ -420,7 +422,7 @@ export default function App() {
           />
         )}
 
-        {view === "docs" && (
+        {view === "confluence" && (
           <DocsView
             docs={state.docs}
             cards={state.cards}
@@ -430,6 +432,14 @@ export default function App() {
             onSelectDoc={setSelectedDocId}
             onNewPage={createDoc}
             onUpdateDoc={updateDoc}
+            onOpenIssue={(cardId) => {
+              const card = state.cards.find((item) => item.id === cardId);
+              if (card) {
+                setSelectedCardId(card.id);
+                setSelectedProjectId(card.projectId);
+                setView("jira");
+              }
+            }}
           />
         )}
 
@@ -445,4 +455,49 @@ export default function App() {
       <Toast message={toast} />
     </div>
   );
+}
+
+function syncDocsFromCardPatch(docs: DocPage[], card: Card | undefined, patch: Partial<Card>) {
+  if (!card) return docs;
+  const nextDocumentId = patch.documentId ?? card.documentId;
+  const projectId = patch.projectId ?? card.projectId;
+  const category = patch.category ?? card.category;
+  const title = patch.title ?? card.title;
+
+  return docs.map((doc) => {
+    const wasLinked = doc.id === card.documentId || doc.cardIds.includes(card.id);
+    const shouldLink = doc.id === nextDocumentId;
+    let cardIds = doc.cardIds;
+
+    if (wasLinked && !shouldLink) {
+      cardIds = cardIds.filter((id) => id !== card.id);
+    }
+    if (shouldLink && !cardIds.includes(card.id)) {
+      cardIds = [...cardIds, card.id];
+    }
+
+    if (!wasLinked && !shouldLink) return doc;
+
+    const patchFromIssue: Partial<DocPage> = { cardIds };
+    if (shouldLink) {
+      patchFromIssue.projectId = projectId;
+      patchFromIssue.category = category;
+      if (patch.title && doc.title === `${card.title} 노트`) {
+        patchFromIssue.title = `${title} 노트`;
+      }
+    }
+
+    return { ...doc, ...patchFromIssue };
+  });
+}
+
+function syncCardsFromDocPatch(cards: Card[], doc: DocPage | undefined, patch: Partial<DocPage>) {
+  if (!doc) return cards;
+  return cards.map((card) => {
+    if (!doc.cardIds.includes(card.id)) return card;
+    const nextPatch: Partial<Card> = {};
+    if (patch.projectId) nextPatch.projectId = patch.projectId;
+    if (patch.category) nextPatch.category = patch.category;
+    return Object.keys(nextPatch).length > 0 ? { ...card, ...nextPatch } : card;
+  });
 }

@@ -6,8 +6,8 @@ type TopNavigationProps = {
 };
 
 const navItems: { key: View; label: string; caption: string }[] = [
-  { key: "workspace", label: "작업", caption: "Board · List · Timeline" },
-  { key: "docs", label: "문서", caption: "Pages · Whiteboards" },
+  { key: "jira", label: "Jira", caption: "Cards · Board · Issues" },
+  { key: "confluence", label: "Confluence", caption: "Pages · Whiteboards" },
   { key: "planner", label: "계획", caption: "Calendar blocks" },
   { key: "insights", label: "리포트", caption: "Focus report" }
 ];

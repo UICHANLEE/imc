@@ -15,9 +15,10 @@ type DocsViewProps = {
   onSelectDoc: (docId: string) => void;
   onNewPage: (type: DocType) => void;
   onUpdateDoc: (docId: string, patch: Partial<DocPage>) => void;
+  onOpenIssue: (cardId: string) => void;
 };
 
-export function DocsView({ docs, cards, projects, selectedProjectId, selectedDocId, onSelectDoc, onNewPage, onUpdateDoc }: DocsViewProps) {
+export function DocsView({ docs, cards, projects, selectedProjectId, selectedDocId, onSelectDoc, onNewPage, onUpdateDoc, onOpenIssue }: DocsViewProps) {
   const projectDocs = docs.filter((doc) => doc.projectId === selectedProjectId);
   const selectedDoc = projectDocs.find((doc) => doc.id === selectedDocId) ?? projectDocs[0] ?? docs[0];
   const linkedCards = cards.filter((card) => selectedDoc.cardIds.includes(card.id));
@@ -29,9 +30,9 @@ export function DocsView({ docs, cards, projects, selectedProjectId, selectedDoc
     <section>
       <div className="section-heading project-view-heading" style={{ "--project-color": project.color } as CSSProperties}>
         <div>
-          <p className="eyebrow">Confluence-style space</p>
-          <h2>{project.name} knowledge base</h2>
-          <p className="section-subtitle">페이지와 화이트보드를 프로젝트 스페이스 안에서 관리하고 Jira 이슈와 연결합니다.</p>
+          <p className="eyebrow">Confluence</p>
+          <h2>{project.name} Confluence Space</h2>
+          <p className="section-subtitle">페이지와 화이트보드를 관리하고, 연결된 Jira 카드를 바로 열 수 있습니다.</p>
         </div>
         <div className="doc-actions">
           <button className="ghost-button" onClick={() => onNewPage("markdown")}>Markdown 문서</button>
@@ -63,7 +64,14 @@ export function DocsView({ docs, cards, projects, selectedProjectId, selectedDoc
           </header>
 
           <div className="doc-linked-row">
-            {linkedCards.map((card) => <span className="chip" key={card.id}>{card.id} · {card.title}</span>)}
+            <strong>Linked Jira cards</strong>
+            {linkedCards.length === 0 ? (
+              <span className="chip">연결된 Jira 카드 없음</span>
+            ) : linkedCards.map((card) => (
+              <button className="linked-issue-button" key={card.id} onClick={() => onOpenIssue(card.id)}>
+                {card.id} · {card.title}
+              </button>
+            ))}
           </div>
 
           {selectedDoc.type === "markdown" ? (

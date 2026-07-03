@@ -86,11 +86,12 @@ export function Sidebar({ projects, selectedProjectId, cards, docs, onSelectProj
 
       <section className="quick-capture">
         <div className="sidebar-title">
-          <h2>Create issue</h2>
-          <span>Jira</span>
+          <h2>Jira 카드 추가</h2>
+          <span>자동 문서 생성</span>
         </div>
-        <form onSubmit={submitCard}>
-          <input name="title" type="text" placeholder="카드 제목" autoComplete="off" required />
+        <p className="sidebar-help">여기서 카드를 발행하면 연결된 Confluence Markdown 문서가 즉시 생성됩니다.</p>
+        <form className="jira-card-form" key={selectedProjectId} onSubmit={submitCard}>
+          <input name="title" type="text" placeholder="Jira 카드 제목" autoComplete="off" required />
           <div className="form-grid">
             <select name="issueType" aria-label="이슈 타입">
               {issueTypes.map((type) => <option key={type}>{type}</option>)}
@@ -99,7 +100,7 @@ export function Sidebar({ projects, selectedProjectId, cards, docs, onSelectProj
               {priorities.map((priority) => <option key={priority}>{priority}</option>)}
             </select>
           </div>
-          <select name="projectId" aria-label="프로젝트">
+          <select name="projectId" aria-label="프로젝트" defaultValue={selectedProjectId}>
             {projects.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}
           </select>
           <select name="category" aria-label="카테고리">

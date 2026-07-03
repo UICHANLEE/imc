@@ -140,6 +140,20 @@ p {
   gap: 10px;
 }
 
+.sidebar-help {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.jira-card-form {
+  border: 1px solid rgba(12, 102, 228, 0.18);
+  border-radius: 8px;
+  background: #f7fbff;
+  padding: 10px;
+}
+
 input,
 select,
 textarea {
@@ -1222,9 +1236,32 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
   padding: 12px 16px;
   border-bottom: 1px solid var(--line);
   background: #fbfdff;
+}
+
+.doc-linked-row strong {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.linked-issue-button {
+  border: 1px solid rgba(12, 102, 228, 0.2);
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.linked-issue-button:hover {
+  border-color: var(--primary);
+  background: white;
 }
 
 .markdown-layout {

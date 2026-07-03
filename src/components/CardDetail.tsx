@@ -75,7 +75,7 @@ export function CardDetail({ card, doc, docs, projects, timer, onStart, onReset,
           <Field label="Story points">
             <input type="number" min="1" max="21" value={card.storyPoints} onChange={(event) => onUpdate(card.id, { storyPoints: Number(event.target.value) })} />
           </Field>
-          <Field label="Document link">
+          <Field label="Confluence page">
             <select value={card.documentId} onChange={(event) => onUpdate(card.id, { documentId: event.target.value })}>
               {docs.map((item) => <option value={item.id} key={item.id}>{item.title}</option>)}
             </select>
@@ -90,7 +90,7 @@ export function CardDetail({ card, doc, docs, projects, timer, onStart, onReset,
 
         <section className="doc-preview">
           <div className="panel-title">
-            <h3>연결 페이지</h3>
+            <h3>연결된 Confluence 페이지</h3>
             <button className="text-button" onClick={() => doc && onOpenDoc(doc.id)} disabled={!doc}>{doc?.title ?? "새 페이지 필요"} 열기</button>
           </div>
           <p>{card.page}</p>

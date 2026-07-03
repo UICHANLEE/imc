@@ -49,9 +49,9 @@ export function BoardView({
     <section className="board-panel">
       <div className="project-product-header" style={{ "--project-color": project.color } as CSSProperties}>
         <div>
-          <p className="eyebrow">Jira-style project</p>
-          <h2>{project.name} work</h2>
-          <p className="section-subtitle">{cards.length}/{totalCards} issues · {visiblePoints} story points · {doneCount} done</p>
+          <p className="eyebrow">Jira</p>
+          <h2>{project.name} Jira Board</h2>
+          <p className="section-subtitle">{cards.length}/{totalCards} cards · {visiblePoints} story points · {doneCount} done · Confluence 문서 자동 연결</p>
         </div>
         <div className="project-header-actions">
           <div className="view-switch" aria-label="작업 보기 전환">

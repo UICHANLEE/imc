@@ -1,4 +1,4 @@
-export type View = "workspace" | "planner" | "docs" | "insights";
+export type View = "jira" | "confluence" | "planner" | "insights";
 export type Status = "backlog" | "selected" | "progress" | "review" | "done";
 export type Category = "Product" | "Design" | "Development" | "Personal";
 export type Priority = "Highest" | "High" | "Medium" | "Low";
