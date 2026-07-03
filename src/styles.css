@@ -1,15 +1,15 @@
 :root {
   color-scheme: light;
-  --bg: #eef2f7;
-  --sidebar: #0f172a;
-  --sidebar-soft: #172033;
+  --bg: #f4f5f7;
+  --sidebar: #ffffff;
+  --sidebar-soft: #f7f8f9;
   --surface: #ffffff;
   --surface-raised: #f8fafc;
   --surface-soft: #f1f5f9;
-  --text: #111827;
-  --muted: #64748b;
-  --line: #d8e0eb;
-  --line-strong: #c5d0df;
+  --text: #172b4d;
+  --muted: #626f86;
+  --line: #dfe1e6;
+  --line-strong: #b3bac5;
   --primary: #0c66e4;
   --primary-soft: #e9f2ff;
   --danger: #dc2626;
@@ -30,8 +30,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(12, 102, 228, 0.08), transparent 32rem),
-    linear-gradient(180deg, #f8fafc 0%, var(--bg) 100%);
+    linear-gradient(180deg, #ffffff 0, var(--bg) 240px);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -56,7 +55,7 @@ p {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 292px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -65,12 +64,10 @@ p {
   top: 0;
   height: 100vh;
   overflow-y: auto;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(180deg, rgba(37, 99, 235, 0.16), transparent 38%),
-    var(--sidebar);
-  color: #e5edf8;
-  padding: 24px;
+  border-right: 1px solid var(--line);
+  background: var(--sidebar);
+  color: var(--text);
+  padding: 18px;
 }
 
 .brand {
@@ -86,7 +83,7 @@ p {
   width: 46px;
   height: 46px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  background: #0c66e4;
   color: white;
   font-weight: 900;
   box-shadow: 0 14px 28px rgba(37, 99, 235, 0.3);
@@ -99,7 +96,7 @@ p {
 
 .brand span {
   margin-top: 2px;
-  color: #9fb0c7;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -127,14 +124,14 @@ p {
 }
 
 .quick-capture {
-  margin-top: 28px;
+  margin-top: 18px;
   padding-top: 24px;
-  border-top: 1px solid rgba(148, 163, 184, 0.22);
+  border-top: 1px solid var(--line);
 }
 
 .quick-capture h2 {
-  margin: 0 0 12px;
-  color: white;
+  margin: 0;
+  color: var(--text);
   font-size: 14px;
 }
 
@@ -164,8 +161,8 @@ textarea:focus {
 
 .sidebar input,
 .sidebar select {
-  border-color: rgba(148, 163, 184, 0.32);
-  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--line);
+  background: white;
 }
 
 .form-row,
@@ -198,7 +195,7 @@ textarea:focus {
 
 .main {
   min-width: 0;
-  padding: 28px;
+  padding: 20px 24px 28px;
 }
 
 .topbar {
@@ -206,7 +203,11 @@ textarea:focus {
   justify-content: space-between;
   gap: 18px;
   align-items: flex-start;
-  margin-bottom: 22px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 18px 20px;
 }
 
 .top-nav {
@@ -306,9 +307,9 @@ textarea:focus {
 h1 {
   max-width: 980px;
   margin-bottom: 0;
-  color: #0f172a;
-  font-size: clamp(28px, 3.7vw, 46px);
-  line-height: 1.05;
+  color: var(--text);
+  font-size: 30px;
+  line-height: 1.15;
 }
 
 h2 {
@@ -1445,6 +1446,286 @@ h2 {
   box-shadow: none;
 }
 
+.topbar-subtitle {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.sidebar-section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--sidebar-soft);
+  padding: 12px;
+}
+
+.sidebar-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.sidebar-title h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.sidebar-title span {
+  border-radius: 999px;
+  background: #e9f2ff;
+  color: var(--primary);
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.project-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.project-nav-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  padding: 9px;
+  text-align: left;
+}
+
+.project-nav-item i,
+.space-card i {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+}
+
+.project-nav-item strong,
+.project-nav-item small,
+.space-card strong,
+.space-card small {
+  display: block;
+}
+
+.project-nav-item strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.project-nav-item small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.project-nav-item.active,
+.project-nav-item:hover {
+  border-color: rgba(12, 102, 228, 0.22);
+  background: white;
+  box-shadow: 0 8px 20px rgba(9, 30, 66, 0.08);
+}
+
+.project-capture {
+  border-top-color: var(--line);
+}
+
+.project-capture h2 {
+  color: var(--text);
+}
+
+.project-product-header,
+.project-view-heading {
+  border-bottom: 3px solid color-mix(in srgb, var(--project-color, var(--primary)) 72%, white);
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+}
+
+.project-product-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.project-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.view-switch {
+  display: inline-flex;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f8f9;
+  padding: 3px;
+}
+
+.view-switch button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #44546f;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.view-switch button.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 3px 8px rgba(9, 30, 66, 0.12);
+}
+
+.issue-table {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+
+.issue-table-row {
+  display: grid;
+  grid-template-columns: 90px minmax(220px, 1fr) 120px 110px 100px 110px;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: white;
+  color: #44546f;
+  padding: 11px 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.issue-table-row:hover {
+  background: #f7f8f9;
+}
+
+.issue-table-row strong {
+  color: var(--text);
+}
+
+.issue-table-head {
+  background: #f7f8f9;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.priority-text {
+  font-weight: 900;
+}
+
+.priority-highest,
+.priority-high {
+  color: var(--danger);
+}
+
+.priority-medium {
+  color: var(--warning);
+}
+
+.timeline-view {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f8f9;
+  padding: 12px;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 90px minmax(180px, 1fr) minmax(170px, 38%);
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.timeline-row span {
+  color: #44546f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.timeline-row strong {
+  color: var(--text);
+}
+
+.timeline-row i {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--project-color, var(--primary)) 22%, white), white);
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  text-align: center;
+}
+
+.space-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f8f9;
+  padding: 12px;
+}
+
+.space-card small {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.doc-tree {
+  display: grid;
+  gap: 7px;
+}
+
+.doc-tree h3 {
+  margin: 12px 0 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.doc-tree p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 @media (max-width: 1200px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1464,6 +1745,16 @@ h2 {
   .top-nav {
     position: static;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topbar,
+  .project-product-header {
+    display: grid;
+  }
+
+  .topbar-actions,
+  .project-header-actions {
+    justify-content: start;
   }
 
   .calendar {
@@ -1486,6 +1777,15 @@ h2 {
   .panel-title,
   .board-toolbar {
     display: grid;
+  }
+
+  .topbar-actions {
+    display: grid;
+  }
+
+  .issue-table-row,
+  .timeline-row {
+    grid-template-columns: 1fr;
   }
 
   .field-grid {

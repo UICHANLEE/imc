@@ -11,7 +11,7 @@ import { TopNavigation } from "./components/TopNavigation";
 import { days, endHour, hourHeight, initialState, startHour, storageKey } from "./data";
 import { usePersistentState } from "./hooks/usePersistentState";
 import type { AppState, Card, Category, DocPage, DocType, IssueType, Priority, Status, TimerState, View } from "./types";
-import { clamp, formatClock, formatFocus, getMetrics } from "./utils";
+import { clamp, formatClock, formatFocus, getMetrics, getProject } from "./utils";
 
 type InteractionState = {
   mode: "moving" | "resizing";
@@ -22,6 +22,7 @@ type InteractionState = {
 export default function App() {
   const [view, setView] = useState<View>("workspace");
   const [state, setState] = usePersistentState<AppState>(storageKey, initialState);
+  const [selectedProjectId, setSelectedProjectId] = useState(initialState.projects[0].id);
   const [selectedCardId, setSelectedCardId] = useState(initialState.cards[0].id);
   const [selectedDocId, setSelectedDocId] = useState(initialState.docs[0].id);
   const [search, setSearch] = useState("");
@@ -33,12 +34,14 @@ export default function App() {
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [plannerInteractionId, setPlannerInteractionId] = useState<string | null>(null);
 
-  const selectedCard = state.cards.find((card) => card.id === selectedCardId) ?? state.cards[0];
+  const selectedProject = getProject(state.projects, selectedProjectId);
+  const projectCards = useMemo(() => state.cards.filter((card) => card.projectId === selectedProject.id), [selectedProject.id, state.cards]);
+  const selectedCard = state.cards.find((card) => card.id === selectedCardId) ?? projectCards[0] ?? state.cards[0];
   const selectedDoc = state.docs.find((doc) => doc.id === selectedCard.documentId) ?? state.docs.find((doc) => doc.cardIds.includes(selectedCard.id));
-  const metrics = useMemo(() => getMetrics(state.cards), [state.cards]);
+  const metrics = useMemo(() => getMetrics(projectCards), [projectCards]);
   const visibleCards = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return state.cards.filter((card) => {
+    return projectCards.filter((card) => {
       const matchesSearch = !query ||
         card.id.toLowerCase().includes(query) ||
         card.title.toLowerCase().includes(query) ||
@@ -47,7 +50,13 @@ export default function App() {
       const matchesAssignee = assigneeFilter === "All" || card.assignee === assigneeFilter;
       return matchesSearch && matchesType && matchesAssignee;
     });
-  }, [assigneeFilter, issueTypeFilter, search, state.cards]);
+  }, [assigneeFilter, issueTypeFilter, projectCards, search]);
+
+  useEffect(() => {
+    const cardIsInProject = projectCards.some((card) => card.id === selectedCardId);
+    if (cardIsInProject || projectCards.length === 0) return;
+    setSelectedCardId(projectCards[0].id);
+  }, [projectCards, selectedCardId]);
 
   useEffect(() => {
     if (!toast) return;
@@ -109,6 +118,7 @@ export default function App() {
       color
     };
     setState((current) => ({ ...current, projects: [...current.projects, project] }));
+    setSelectedProjectId(project.id);
     setToast(`${name} 프로젝트를 추가했어요.`);
   }
 
@@ -173,6 +183,7 @@ export default function App() {
     }));
     setSelectedCardId(id);
     setSelectedDocId(docId);
+    setSelectedProjectId(input.projectId);
     setToast("새 카드를 발행했어요.");
   }
 
@@ -230,7 +241,7 @@ export default function App() {
   }
 
   function createDoc(type: DocType) {
-    const project = state.projects[0];
+    const project = selectedProject;
     const doc: DocPage = {
       id: `DOC-${state.docs.length + 1}`,
       title: type === "markdown" ? "새 Markdown 문서" : "새 Canvas 문서",
@@ -318,17 +329,32 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar projects={state.projects} onCreateProject={createProject} onCreateCard={createCard} />
+      <Sidebar
+        projects={state.projects}
+        selectedProjectId={selectedProject.id}
+        cards={state.cards}
+        docs={state.docs}
+        onSelectProject={setSelectedProjectId}
+        onCreateProject={createProject}
+        onCreateCard={createCard}
+      />
 
       <main className="main">
         <header className="topbar">
           <div>
-            <p className="eyebrow">React MVP</p>
-            <h1>카드를 시간으로 옮기고, 문서와 집중 기록까지 이어가기</h1>
+            <p className="eyebrow">It's My Calendar</p>
+            <h1>{selectedProject.name}</h1>
+            <p className="topbar-subtitle">Jira식 이슈 관리, Confluence식 문서 공간, 주간 플래너를 하나의 프로젝트 컨텍스트에서 운영합니다.</p>
           </div>
-          <div className="today-chip">
-            <span>오늘 집중</span>
-            <strong>{formatFocus(metrics.focusMinutes)}</strong>
+          <div className="topbar-actions">
+            <div className="today-chip">
+              <span>프로젝트 집중</span>
+              <strong>{formatFocus(metrics.focusMinutes)}</strong>
+            </div>
+            <div className="today-chip">
+              <span>이슈</span>
+              <strong>{projectCards.length}</strong>
+            </div>
           </div>
         </header>
         <TopNavigation view={view} onViewChange={setView} />
@@ -345,7 +371,8 @@ export default function App() {
             <BoardView
               cards={visibleCards}
               projects={state.projects}
-              totalCards={state.cards.length}
+              project={selectedProject}
+              totalCards={projectCards.length}
               search={search}
               issueTypeFilter={issueTypeFilter}
               assigneeFilter={assigneeFilter}
@@ -379,7 +406,8 @@ export default function App() {
 
         {view === "planner" && (
           <PlannerView
-            cards={state.cards}
+            cards={projectCards}
+            selectedProjectId={selectedProject.id}
             projects={state.projects}
             onSelectCard={setSelectedCardId}
             onScheduleCard={scheduleCard}
@@ -397,6 +425,7 @@ export default function App() {
             docs={state.docs}
             cards={state.cards}
             projects={state.projects}
+            selectedProjectId={selectedProject.id}
             selectedDocId={selectedDocId}
             onSelectDoc={setSelectedDocId}
             onNewPage={createDoc}

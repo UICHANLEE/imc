@@ -6,10 +6,10 @@ type TopNavigationProps = {
 };
 
 const navItems: { key: View; label: string; caption: string }[] = [
-  { key: "workspace", label: "워크스페이스", caption: "Jira board" },
-  { key: "planner", label: "캘린더 플래너", caption: "Time blocks" },
-  { key: "docs", label: "문서 허브", caption: "Confluence docs" },
-  { key: "insights", label: "집중 통계", caption: "Focus report" }
+  { key: "workspace", label: "작업", caption: "Board · List · Timeline" },
+  { key: "docs", label: "문서", caption: "Pages · Whiteboards" },
+  { key: "planner", label: "계획", caption: "Calendar blocks" },
+  { key: "insights", label: "리포트", caption: "Focus report" }
 ];
 
 export function TopNavigation({ view, onViewChange }: TopNavigationProps) {

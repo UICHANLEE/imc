@@ -1,9 +1,13 @@
 import type { FormEvent } from "react";
 import { assignees, categories, issueTypes, priorities } from "../data";
-import type { Category, IssueType, Priority, Project } from "../types";
+import type { Card, Category, DocPage, IssueType, Priority, Project } from "../types";
 
 type SidebarProps = {
   projects: Project[];
+  selectedProjectId: string;
+  cards: Card[];
+  docs: DocPage[];
+  onSelectProject: (projectId: string) => void;
   onCreateProject: (name: string, color: string) => void;
   onCreateCard: (input: {
     title: string;
@@ -17,7 +21,7 @@ type SidebarProps = {
   }) => void;
 };
 
-export function Sidebar({ projects, onCreateProject, onCreateCard }: SidebarProps) {
+export function Sidebar({ projects, selectedProjectId, cards, docs, onSelectProject, onCreateProject, onCreateCard }: SidebarProps) {
   function submitCard(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -50,12 +54,41 @@ export function Sidebar({ projects, onCreateProject, onCreateCard }: SidebarProp
         <div className="brand-mark">IMC</div>
         <div>
           <strong>It's My Calendar</strong>
-          <span>plan, focus, record</span>
+          <span>project operating system</span>
         </div>
       </div>
 
+      <section className="sidebar-section project-switcher">
+        <div className="sidebar-title">
+          <h2>Projects</h2>
+          <span>{projects.length}</span>
+        </div>
+        <div className="project-nav">
+          {projects.map((project) => {
+            const issueCount = cards.filter((card) => card.projectId === project.id).length;
+            const pageCount = docs.filter((doc) => doc.projectId === project.id).length;
+            return (
+              <button
+                key={project.id}
+                className={`project-nav-item ${selectedProjectId === project.id ? "active" : ""}`}
+                onClick={() => onSelectProject(project.id)}
+              >
+                <i style={{ background: project.color }} />
+                <span>
+                  <strong>{project.name}</strong>
+                  <small>{project.key} · {issueCount} issues · {pageCount} pages</small>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="quick-capture">
-        <h2>빠른 카드 생성</h2>
+        <div className="sidebar-title">
+          <h2>Create issue</h2>
+          <span>Jira</span>
+        </div>
         <form onSubmit={submitCard}>
           <input name="title" type="text" placeholder="카드 제목" autoComplete="off" required />
           <div className="form-grid">
@@ -84,7 +117,10 @@ export function Sidebar({ projects, onCreateProject, onCreateCard }: SidebarProp
       </section>
 
       <section className="project-capture">
-        <h2>프로젝트 커스텀</h2>
+        <div className="sidebar-title">
+          <h2>New project</h2>
+          <span>custom</span>
+        </div>
         <form onSubmit={submitProject}>
           <input name="projectName" type="text" placeholder="프로젝트 이름" autoComplete="off" />
           <div className="project-form-row">
@@ -92,14 +128,6 @@ export function Sidebar({ projects, onCreateProject, onCreateCard }: SidebarProp
             <button type="submit">추가</button>
           </div>
         </form>
-        <div className="project-list">
-          {projects.map((project) => (
-            <span className="project-pill" key={project.id}>
-              <i style={{ background: project.color }} />
-              {project.name}
-            </span>
-          ))}
-        </div>
       </section>
     </aside>
   );

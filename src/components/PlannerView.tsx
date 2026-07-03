@@ -6,6 +6,7 @@ import { WorkCard } from "./WorkCard";
 
 type PlannerViewProps = {
   cards: Card[];
+  selectedProjectId: string;
   projects: Project[];
   onSelectCard: (id: string) => void;
   onScheduleCard: (id: string, day: number, start: number) => void;
@@ -19,6 +20,7 @@ type PlannerViewProps = {
 
 export function PlannerView({
   cards,
+  selectedProjectId,
   projects,
   onSelectCard,
   onScheduleCard,
@@ -29,12 +31,14 @@ export function PlannerView({
   onCardDragStart,
   onCardDragEnd
 }: PlannerViewProps) {
+  const project = getProject(projects, selectedProjectId);
   return (
     <section>
-      <div className="section-heading">
+      <div className="section-heading project-view-heading" style={{ "--project-color": project.color } as CSSProperties}>
         <div>
           <p className="eyebrow">Calendar Planner</p>
-          <h2>주간 시간 블록</h2>
+          <h2>{project.name} 주간 계획</h2>
+          <p className="section-subtitle">Jira 이슈를 시간 블록으로 변환해 일정과 집중 시간을 함께 관리합니다.</p>
         </div>
         <div className="legend">
           {categories.map((category) => <span key={category}><i className={`dot ${category.toLowerCase()}`}></i>{category}</span>)}

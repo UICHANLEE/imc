@@ -10,24 +10,28 @@ type DocsViewProps = {
   docs: DocPage[];
   cards: Card[];
   projects: Project[];
+  selectedProjectId: string;
   selectedDocId: string;
   onSelectDoc: (docId: string) => void;
   onNewPage: (type: DocType) => void;
   onUpdateDoc: (docId: string, patch: Partial<DocPage>) => void;
 };
 
-export function DocsView({ docs, cards, projects, selectedDocId, onSelectDoc, onNewPage, onUpdateDoc }: DocsViewProps) {
-  const selectedDoc = docs.find((doc) => doc.id === selectedDocId) ?? docs[0];
+export function DocsView({ docs, cards, projects, selectedProjectId, selectedDocId, onSelectDoc, onNewPage, onUpdateDoc }: DocsViewProps) {
+  const projectDocs = docs.filter((doc) => doc.projectId === selectedProjectId);
+  const selectedDoc = projectDocs.find((doc) => doc.id === selectedDocId) ?? projectDocs[0] ?? docs[0];
   const linkedCards = cards.filter((card) => selectedDoc.cardIds.includes(card.id));
   const project = getProject(projects, selectedDoc.projectId);
+  const markdownDocs = projectDocs.filter((doc) => doc.type === "markdown");
+  const canvasDocs = projectDocs.filter((doc) => doc.type === "canvas");
 
   return (
     <section>
-      <div className="section-heading">
+      <div className="section-heading project-view-heading" style={{ "--project-color": project.color } as CSSProperties}>
         <div>
-          <p className="eyebrow">Confluence + Excalidraw Docs</p>
-          <h2>문서 허브</h2>
-          <p className="section-subtitle">Confluence처럼 문서를 쓰고, Excalidraw 원본 편집기를 그대로 사용합니다.</p>
+          <p className="eyebrow">Confluence-style space</p>
+          <h2>{project.name} knowledge base</h2>
+          <p className="section-subtitle">페이지와 화이트보드를 프로젝트 스페이스 안에서 관리하고 Jira 이슈와 연결합니다.</p>
         </div>
         <div className="doc-actions">
           <button className="ghost-button" onClick={() => onNewPage("markdown")}>Markdown 문서</button>
@@ -37,16 +41,13 @@ export function DocsView({ docs, cards, projects, selectedDocId, onSelectDoc, on
 
       <div className="docs-workspace">
         <aside className="doc-sidebar">
-          {docs.map((doc) => {
-            const itemProject = getProject(projects, doc.projectId);
-            return (
-              <button className={`doc-list-item ${doc.id === selectedDoc.id ? "active" : ""}`} key={doc.id} onClick={() => onSelectDoc(doc.id)}>
-                <i style={{ background: itemProject.color }} />
-                <span>{doc.title}</span>
-                <small>{doc.type === "canvas" ? "excalidraw" : "markdown"}</small>
-              </button>
-            );
-          })}
+          <div className="space-card">
+            <i style={{ background: project.color }} />
+            <strong>{project.name}</strong>
+            <small>{project.key} space · {projectDocs.length} pages</small>
+          </div>
+          <DocTree title="Pages" docs={markdownDocs} selectedDocId={selectedDoc.id} projectColor={project.color} onSelectDoc={onSelectDoc} />
+          <DocTree title="Whiteboards" docs={canvasDocs} selectedDocId={selectedDoc.id} projectColor={project.color} onSelectDoc={onSelectDoc} />
         </aside>
 
         <article className="doc-editor-shell" style={{ "--project-color": project.color } as CSSProperties}>
@@ -75,6 +76,29 @@ export function DocsView({ docs, cards, projects, selectedDocId, onSelectDoc, on
         </article>
       </div>
     </section>
+  );
+}
+
+function DocTree({ title, docs, selectedDocId, projectColor, onSelectDoc }: {
+  title: string;
+  docs: DocPage[];
+  selectedDocId: string;
+  projectColor: string;
+  onSelectDoc: (docId: string) => void;
+}) {
+  return (
+    <div className="doc-tree">
+      <h3>{title}</h3>
+      {docs.length === 0 ? (
+        <p>아직 문서가 없습니다.</p>
+      ) : docs.map((doc) => (
+        <button className={`doc-list-item ${doc.id === selectedDocId ? "active" : ""}`} key={doc.id} onClick={() => onSelectDoc(doc.id)}>
+          <i style={{ background: projectColor }} />
+          <span>{doc.title}</span>
+          <small>{doc.type === "canvas" ? "whiteboard" : "page"}</small>
+        </button>
+      ))}
+    </div>
   );
 }
 
