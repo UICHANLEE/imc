@@ -2,6 +2,7 @@ import type { PointerEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { CardDetail } from "./components/CardDetail";
 import { BoardView } from "./components/BoardView";
+import { DashboardView } from "./components/DashboardView";
 import { DocsView } from "./components/DocsView";
 import { InsightsView } from "./components/InsightsView";
 import { PlannerView } from "./components/PlannerView";
@@ -20,7 +21,7 @@ type InteractionState = {
 } | null;
 
 export default function App() {
-  const [view, setView] = useState<View>("jira");
+  const [view, setView] = useState<View>("dashboard");
   const [state, setState] = usePersistentState<AppState>(storageKey, initialState);
   const [selectedProjectId, setSelectedProjectId] = useState(initialState.projects[0].id);
   const [selectedCardId, setSelectedCardId] = useState(initialState.cards[0].id);
@@ -348,6 +349,7 @@ export default function App() {
           <div className="global-left">
             <div className="app-switcher" aria-hidden="true">::</div>
             <strong>Atlassian</strong>
+            <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}>Home</button>
             <button className={view === "jira" ? "active" : ""} onClick={() => setView("jira")}>Jira</button>
             <button className={view === "confluence" ? "active" : ""} onClick={() => setView("confluence")}>Confluence</button>
             <button>Projects</button>
@@ -388,6 +390,18 @@ export default function App() {
             <span>{interaction.title}</span>
             <small>{interaction.detail}</small>
           </div>
+        )}
+
+        {view === "dashboard" && (
+          <DashboardView
+            cards={projectCards}
+            docs={state.docs.filter((doc) => doc.projectId === selectedProject.id)}
+            projects={state.projects}
+            metrics={metrics}
+            onViewChange={setView}
+            onSelectCard={setSelectedCardId}
+            onSelectDoc={setSelectedDocId}
+          />
         )}
 
         {view === "jira" && (

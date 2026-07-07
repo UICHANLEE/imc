@@ -59,12 +59,13 @@ export function Sidebar({ projects, selectedProjectId, cards, docs, view, onView
       <div className="brand">
         <div className="brand-mark">IMC</div>
         <div>
-          <strong>{view === "confluence" ? "Confluence" : "Jira"}</strong>
+          <strong>{view === "dashboard" ? "Home" : view === "confluence" ? "Confluence" : "Jira"}</strong>
           <span>{selectedProject.name}</span>
         </div>
       </div>
 
       <section className="sidebar-section product-menu">
+        <button className={view === "dashboard" ? "active" : ""} onClick={() => onViewChange("dashboard")}>Home dashboard</button>
         <button className={view === "jira" ? "active" : ""} onClick={() => onViewChange("jira")}>Jira software</button>
         <button className={view === "confluence" ? "active" : ""} onClick={() => onViewChange("confluence")}>Confluence space</button>
       </section>
