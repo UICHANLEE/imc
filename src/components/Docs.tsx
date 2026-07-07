@@ -52,6 +52,7 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
             <span className="font-medium text-slate-300 flex items-center gap-1">
               {doc.title}
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1" title="Saved locally"></span>
+              <span className="ml-2 rounded bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">Live</span>
             </span>
           </div>
 
@@ -66,16 +67,16 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
           </div>
 
           <div className="prose prose-invert prose-slate max-w-none">
-            {doc.type === "canvas" ? (
+            <MarkdownPreview body={doc.body} />
+
+            {doc.type === "canvas" && (
               <div className="my-6 border-l-4 border-indigo-500 bg-indigo-500/10 p-4 rounded-r-lg relative">
-                <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-1">Canvas Document</span>
-                <p className="text-slate-300 m-0">This page is linked to a canvas. Open the Canvas tab to edit spatial notes and diagrams for this document.</p>
+                <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-1">Canvas Linked</span>
+                <p className="text-slate-300 m-0">This Markdown page also has an Excalidraw scene. Open the Canvas tab to edit diagrams for this document.</p>
                 <button className="mt-4 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-md transition-colors" onClick={() => onChangeView("canvas")}>
                   Open Canvas
                 </button>
               </div>
-            ) : (
-              <MarkdownPreview body={doc.body} />
             )}
 
             <h2 className="text-2xl font-semibold text-slate-200 mt-10 mb-4 border-b border-slate-800 pb-2">Linked Jira Cards</h2>
@@ -117,7 +118,7 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
 
         <div className="flex-1 overflow-y-auto p-4">
           <h4 className="text-xs font-semibold text-slate-500 tracking-widest uppercase mb-4 flex justify-between">
-            Comments <span className="bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">{linkedCards.length} Linked</span>
+            Live Document <span className="bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">{doc.revisions?.length ?? 0} Revisions</span>
           </h4>
 
           <div className="space-y-4">
@@ -140,8 +141,8 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
 
             <div className="bg-slate-900 border border-slate-800 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-3">
-                {doc.type === "canvas" ? <PenTool className="w-4 h-4 text-purple-400" /> : <FileText className="w-4 h-4 text-indigo-400" />}
-                <span className="text-sm font-medium text-slate-200">Markdown Source</span>
+                <FileText className="w-4 h-4 text-indigo-400" />
+                <span className="text-sm font-medium text-slate-200">Live Markdown Source</span>
               </div>
               <textarea
                 value={doc.body}
@@ -149,6 +150,35 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
                 className="min-h-64 w-full resize-none rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-xs leading-relaxed text-slate-300 font-mono focus:outline-none focus:border-indigo-500"
                 placeholder="# Write markdown here"
               />
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <History className="w-4 h-4 text-amber-400" />
+                <span className="text-sm font-medium text-slate-200">Change History</span>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {(doc.revisions ?? []).length === 0 ? (
+                  <p className="text-xs text-slate-500">No edits recorded yet.</p>
+                ) : (
+                  (doc.revisions ?? []).map((revision) => (
+                    <div key={revision.id} className="rounded-md border border-slate-800 bg-slate-950/60 p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-medium text-slate-300">{revision.summary}</p>
+                          <p className="text-[10px] text-slate-500">{formatTimestamp(revision.timestamp)} · {revision.author}</p>
+                        </div>
+                        <button
+                          className="rounded border border-slate-700 px-2 py-1 text-[10px] font-medium text-slate-300 hover:bg-slate-800"
+                          onClick={() => onUpdateDocBody(doc.id, revision.body)}
+                        >
+                          Restore
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -159,10 +189,22 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
 
 function MarkdownPreview({ body }: { body: string }) {
   const lines = body.split("\n");
+  let inCodeBlock = false;
 
   return (
     <>
       {lines.map((line, index) => {
+        if (line.startsWith("```")) {
+          inCodeBlock = !inCodeBlock;
+          return <div key={index} className="h-2" />;
+        }
+        if (inCodeBlock) {
+          return (
+            <pre key={index} className="bg-slate-900 rounded-lg px-4 py-1 font-mono text-sm text-indigo-300 overflow-x-auto border border-slate-800">
+              {line}
+            </pre>
+          );
+        }
         if (line.startsWith("# ")) {
           return (
             <h2 key={index} className="text-2xl font-semibold text-slate-200 mt-10 mb-4 border-b border-slate-800 pb-2">
@@ -185,6 +227,21 @@ function MarkdownPreview({ body }: { body: string }) {
             </p>
           );
         }
+        if (line.startsWith("1. ") || line.startsWith("2. ") || line.startsWith("3. ")) {
+          return (
+            <p key={index} className="text-slate-300 leading-relaxed mb-2 flex gap-3">
+              <span className="text-indigo-400 font-mono">{line.slice(0, 2)}</span>
+              <span>{line.replace(/^\d+\. /, "")}</span>
+            </p>
+          );
+        }
+        if (line.startsWith("> ")) {
+          return (
+            <blockquote key={index} className="border-l-4 border-indigo-500 bg-indigo-500/10 p-4 rounded-r-lg text-slate-300">
+              {line.replace(/^> /, "")}
+            </blockquote>
+          );
+        }
         if (!line.trim()) {
           return <div key={index} className="h-3" />;
         }
@@ -196,4 +253,13 @@ function MarkdownPreview({ body }: { body: string }) {
       })}
     </>
   );
+}
+
+function formatTimestamp(timestamp: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(timestamp));
 }

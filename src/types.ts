@@ -67,6 +67,14 @@ export type ExcalidrawSceneData = {
   files?: Record<string, unknown>;
 };
 
+export type DocRevision = {
+  id: string;
+  timestamp: string;
+  author: string;
+  body: string;
+  summary: string;
+};
+
 export type DocPage = {
   id: string;
   title: string;
@@ -77,6 +85,7 @@ export type DocPage = {
   excalidrawData?: ExcalidrawSceneData;
   canvasElements: CanvasElement[];
   cardIds: string[];
+  revisions?: DocRevision[];
 };
 
 export type AppState = {

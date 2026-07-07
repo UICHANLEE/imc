@@ -9,8 +9,6 @@ import { usePersistentState } from "./hooks/usePersistentState";
 import type {
   AppState,
   BoardPriority,
-  CanvasElement,
-  CanvasNode,
   Card,
   DocPage,
   Status,
@@ -40,38 +38,6 @@ const avatarFor = (name: string) => {
   if (name === "Unassigned") return [];
   return [`https://i.pravatar.cc/150?u=${encodeURIComponent(name)}`];
 };
-
-const docToCanvasNodes = (doc?: DocPage): CanvasNode[] => {
-  if (!doc || doc.canvasElements.length === 0) {
-    return [
-      { id: "node-1", type: "rectangle", x: 400, y: 300, width: 150, height: 60, text: "Start" },
-      { id: "node-2", type: "ellipse", x: 650, y: 280, width: 180, height: 80, text: "Check Auth" }
-    ];
-  }
-
-  return doc.canvasElements.map((element) => ({
-    id: element.id,
-    type: element.type === "diamond" ? "ellipse" : element.type === "text" || element.type === "note" ? "text" : "rectangle",
-    x: element.x,
-    y: element.y,
-    width: element.width,
-    height: element.height,
-    text: element.text,
-    color: element.color
-  }));
-};
-
-const canvasNodesToElements = (nodes: CanvasNode[]): CanvasElement[] =>
-  nodes.map((node) => ({
-    id: node.id,
-    type: node.type === "ellipse" ? "diamond" : node.type,
-    x: node.x,
-    y: node.y,
-    width: node.width,
-    height: node.height,
-    text: node.text ?? "",
-    color: node.color ?? "#6366f1"
-  }));
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
@@ -175,20 +141,45 @@ export default function App() {
     setCurrentView("docs");
   };
 
-  const handleUpdateDocBody = (docId: string, body: string) => {
+  const handleUpdateCard = (cardId: string, patch: Partial<Card>) => {
     setState((current) => ({
       ...current,
-      docs: current.docs.map((doc) => (doc.id === docId ? { ...doc, body } : doc))
+      cards: current.cards.map((card) =>
+        card.id === cardId
+          ? { ...card, ...patch, updatedAt: new Date().toISOString().slice(0, 10) }
+          : card
+      )
     }));
   };
 
-  const handleUpdateCanvasNodes = (nodes: CanvasNode[]) => {
-    if (!selectedDoc) return;
+  const handleUpdateDoc = (docId: string, patch: Partial<DocPage>) => {
     setState((current) => ({
       ...current,
-      docs: current.docs.map((doc) =>
-        doc.id === selectedDoc.id ? { ...doc, type: "canvas", canvasElements: canvasNodesToElements(nodes) } : doc
-      )
+      docs: current.docs.map((doc) => (doc.id === docId ? { ...doc, ...patch } : doc))
+    }));
+  };
+
+  const handleUpdateDocBody = (docId: string, body: string) => {
+    setState((current) => ({
+      ...current,
+      docs: current.docs.map((doc) => {
+        if (doc.id !== docId || doc.body === body) return doc;
+
+        const revision = {
+          id: `rev-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          author: "Uichan",
+          body,
+          summary: `Updated ${Math.abs(body.length - doc.body.length)} characters`
+        };
+
+        return {
+          ...doc,
+          type: "markdown" as const,
+          body,
+          revisions: [revision, ...(doc.revisions ?? [])].slice(0, 30)
+        };
+      })
     }));
   };
 
@@ -204,7 +195,16 @@ export default function App() {
               <Dashboard tasks={tasks} docs={state.docs} onChangeView={setCurrentView} onOpenDoc={handleOpenDoc} />
             )}
             {currentView === "tasks" && (
-              <Tasks tasks={tasks} onTaskStatusChange={handleTaskStatusChange} onCreateTask={handleCreateTask} onOpenDoc={handleOpenDoc} />
+              <Tasks
+                tasks={tasks}
+                cards={state.cards}
+                docs={state.docs}
+                projects={state.projects}
+                onTaskStatusChange={handleTaskStatusChange}
+                onCreateTask={handleCreateTask}
+                onOpenDoc={handleOpenDoc}
+                onUpdateCard={handleUpdateCard}
+              />
             )}
             {currentView === "docs" && (
               <Docs
@@ -218,7 +218,11 @@ export default function App() {
               />
             )}
             {currentView === "canvas" && (
-              <Canvas nodes={docToCanvasNodes(selectedDoc)} edges={[]} onNodesChange={handleUpdateCanvasNodes} />
+              <Canvas
+                doc={selectedDoc}
+                projectColor={state.projects.find((project) => project.id === selectedDoc?.projectId)?.color ?? "#6366f1"}
+                onUpdateDoc={handleUpdateDoc}
+              />
             )}
           </div>
         </main>
