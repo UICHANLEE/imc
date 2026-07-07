@@ -165,19 +165,50 @@ export default function App() {
       docs: current.docs.map((doc) => {
         if (doc.id !== docId || doc.body === body) return doc;
 
+        const now = Date.now();
+        const revisions = doc.revisions ?? [];
+        const latest = revisions[0];
+        const minuteMs = 60_000;
+        const withinSameMinute =
+          latest !== undefined && now - new Date(latest.timestamp).getTime() < minuteMs;
+
+        if (withinSameMinute) {
+          const baseLength = latest.baseLength ?? doc.body.length;
+          const delta = body.length - baseLength;
+          const coalesced = {
+            ...latest,
+            timestamp: new Date(now).toISOString(),
+            body,
+            baseLength,
+            edits: (latest.edits ?? 1) + 1,
+            summary: `${delta >= 0 ? "+" : ""}${delta}자 변경 (1분 구간)`
+          };
+
+          return {
+            ...doc,
+            type: "markdown" as const,
+            body,
+            revisions: [coalesced, ...revisions.slice(1)]
+          };
+        }
+
+        const baseLength = doc.body.length;
+        const delta = body.length - baseLength;
         const revision = {
-          id: `rev-${Date.now()}`,
-          timestamp: new Date().toISOString(),
+          id: `rev-${now}`,
+          timestamp: new Date(now).toISOString(),
           author: "Uichan",
           body,
-          summary: `Updated ${Math.abs(body.length - doc.body.length)} characters`
+          baseLength,
+          edits: 1,
+          summary: `${delta >= 0 ? "+" : ""}${delta}자 변경 (1분 구간)`
         };
 
         return {
           ...doc,
           type: "markdown" as const,
           body,
-          revisions: [revision, ...(doc.revisions ?? [])].slice(0, 30)
+          revisions: [revision, ...revisions].slice(0, 30)
         };
       })
     }));

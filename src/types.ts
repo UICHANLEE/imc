@@ -73,6 +73,8 @@ export type DocRevision = {
   author: string;
   body: string;
   summary: string;
+  baseLength?: number;
+  edits?: number;
 };
 
 export type DocPage = {

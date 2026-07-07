@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Share2, MessageSquare, History, FileText, PenTool } from "lucide-react";
 import type { Card, DocPage, Project, ViewType } from "../types";
 
@@ -12,6 +13,7 @@ interface DocsProps {
 }
 
 export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdateDocBody, onChangeView }: DocsProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const doc = selectedDoc ?? docs[0];
   const project = projects.find((item) => item.id === doc?.projectId);
   const linkedCards = cards.filter((card) => doc?.cardIds.includes(card.id) || card.documentId === doc?.id);
@@ -66,8 +68,46 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
             </div>
           </div>
 
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="inline-flex rounded-lg border border-slate-800 bg-slate-900/60 p-1">
+              <button
+                className={
+                  !isEditing
+                    ? "flex items-center gap-1.5 rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100"
+                    : "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200"
+                }
+                onClick={() => setIsEditing(false)}
+              >
+                <FileText className="h-3.5 w-3.5" /> 보기
+              </button>
+              <button
+                className={
+                  isEditing
+                    ? "flex items-center gap-1.5 rounded-md bg-indigo-500 px-3 py-1.5 text-xs font-medium text-white"
+                    : "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200"
+                }
+                onClick={() => setIsEditing(true)}
+              >
+                <PenTool className="h-3.5 w-3.5" /> 편집
+              </button>
+            </div>
+            {isEditing && (
+              <span className="text-[11px] text-slate-500">이 창에서 수정한 내용은 실시간 저장되며 1분 단위로 기록됩니다.</span>
+            )}
+          </div>
+
           <div className="prose prose-invert prose-slate max-w-none">
-            <MarkdownPreview body={doc.body} />
+            {isEditing ? (
+              <textarea
+                value={doc.body}
+                onChange={(event) => onUpdateDocBody(doc.id, event.target.value)}
+                className="min-h-[60vh] w-full resize-y rounded-lg border border-slate-800 bg-slate-900/40 p-5 font-mono text-sm leading-relaxed text-slate-200 focus:border-indigo-500 focus:outline-none"
+                placeholder="# 제목&#10;&#10;- 내용을 입력하세요"
+                autoFocus
+              />
+            ) : (
+              <MarkdownPreview body={doc.body} />
+            )}
 
             {doc.type === "canvas" && (
               <div className="my-6 border-l-4 border-indigo-500 bg-indigo-500/10 p-4 rounded-r-lg relative">
@@ -156,6 +196,7 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
               <div className="flex items-center gap-2 mb-3">
                 <History className="w-4 h-4 text-amber-400" />
                 <span className="text-sm font-medium text-slate-200">Change History</span>
+                <span className="ml-auto rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">1분 단위</span>
               </div>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {(doc.revisions ?? []).length === 0 ? (
@@ -166,7 +207,10 @@ export function Docs({ docs, cards, projects, selectedDoc, onSelectDoc, onUpdate
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <p className="text-xs font-medium text-slate-300">{revision.summary}</p>
-                          <p className="text-[10px] text-slate-500">{formatTimestamp(revision.timestamp)} · {revision.author}</p>
+                          <p className="text-[10px] text-slate-500">
+                            {formatTimestamp(revision.timestamp)} · {revision.author}
+                            {revision.edits && revision.edits > 1 ? ` · ${revision.edits}회 편집` : ""}
+                          </p>
                         </div>
                         <button
                           className="rounded border border-slate-700 px-2 py-1 text-[10px] font-medium text-slate-300 hover:bg-slate-800"
