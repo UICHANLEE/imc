@@ -347,20 +347,17 @@ export default function App() {
       <main className="main">
         <header className="global-product-bar">
           <div className="global-left">
-            <div className="app-switcher" aria-hidden="true">::</div>
-            <strong>Atlassian</strong>
+            <div className="app-switcher" aria-hidden="true">IM</div>
+            <strong>It's My Calendar</strong>
             <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}>Home</button>
             <button className={view === "jira" ? "active" : ""} onClick={() => setView("jira")}>Jira</button>
             <button className={view === "confluence" ? "active" : ""} onClick={() => setView("confluence")}>Confluence</button>
-            <button>Projects</button>
-            <button>Filters</button>
-            <button>Dashboards</button>
-            <button>Teams</button>
-            <button>Apps</button>
+            <button className={view === "planner" ? "active" : ""} onClick={() => setView("planner")}>Planner</button>
+            <button className={view === "insights" ? "active" : ""} onClick={() => setView("insights")}>Reports</button>
             <button className="create-work-button" onClick={() => setView("jira")}>Create</button>
           </div>
           <div className="global-right">
-            <input aria-label="Search" placeholder="Search" />
+            <input aria-label="Search" placeholder="Search IMC..." />
             <button aria-label="Help">?</button>
             <button aria-label="Settings">⚙</button>
             <span className="avatar">UI</span>

@@ -2541,3 +2541,658 @@ h2 {
     overflow-x: auto;
   }
 }
+
+/* zip.zip Nexus UI skin: keep IMC features, replace the visual shell. */
+:root {
+  --bg: #020617;
+  --surface: rgba(15, 23, 42, 0.72);
+  --surface-solid: #0f172a;
+  --surface-raised: #111827;
+  --line: rgba(51, 65, 85, 0.9);
+  --line-strong: #475569;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --primary: #6366f1;
+  --primary-strong: #818cf8;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: #020617;
+}
+
+body {
+  color: var(--text);
+  background:
+    radial-gradient(circle at 88% 0%, rgba(79, 70, 229, 0.22), transparent 34rem),
+    radial-gradient(circle at 12% 12%, rgba(14, 165, 233, 0.12), transparent 26rem),
+    #020617;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  border-color: #334155 !important;
+  background: rgba(15, 23, 42, 0.82) !important;
+  color: #e2e8f0 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #64748b;
+}
+
+.app-shell {
+  grid-template-columns: 300px minmax(0, 1fr);
+  min-height: 100vh;
+  background: transparent;
+}
+
+.main {
+  min-width: 0;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.28), transparent 240px),
+    #020617;
+  padding: 0 24px 40px;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  border-right: 1px solid #1e293b;
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(18px);
+  box-shadow: none;
+}
+
+.brand {
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 18px;
+}
+
+.brand-mark,
+.app-switcher {
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #2563eb);
+  color: white;
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.28);
+}
+
+.brand strong,
+.global-left strong {
+  color: #f8fafc;
+}
+
+.brand span,
+.sidebar-help,
+.section-subtitle,
+.topbar-subtitle {
+  color: #94a3b8;
+}
+
+.sidebar-section,
+.quick-capture,
+.project-capture {
+  border-top: 1px solid #1e293b;
+}
+
+.sidebar-title h2,
+.doc-tree h3 {
+  color: #64748b;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.product-menu button,
+.space-nav button,
+.project-nav-item {
+  border: 1px solid transparent;
+  color: #94a3b8;
+}
+
+.product-menu button.active,
+.space-nav button.active,
+.project-nav-item.active,
+.product-menu button:hover,
+.space-nav button:hover,
+.project-nav-item:hover {
+  border-color: #334155;
+  background: rgba(30, 41, 59, 0.78);
+  color: #c7d2fe;
+}
+
+.project-nav-item strong {
+  color: #e2e8f0;
+}
+
+.project-nav-item small,
+.mini-tree span {
+  color: #64748b;
+}
+
+.jira-card-form,
+.project-capture form {
+  display: grid;
+  gap: 10px;
+}
+
+.jira-card-form button,
+.project-capture button,
+.create-work-button,
+.publish-button,
+.dashboard-actions button:first-child {
+  border-color: transparent !important;
+  background: #6366f1 !important;
+  color: white !important;
+  box-shadow: 0 14px 30px rgba(99, 102, 241, 0.24);
+}
+
+.global-product-bar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  height: 56px;
+  margin: 0 -24px 0;
+  border-bottom: 1px solid #1e293b;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(18px);
+}
+
+.global-left {
+  gap: 6px;
+}
+
+.global-product-bar button {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #94a3b8;
+  padding: 8px 11px;
+}
+
+.global-product-bar button.active,
+.global-product-bar button:hover {
+  border-color: #334155;
+  background: rgba(30, 41, 59, 0.9);
+  color: #c7d2fe;
+}
+
+.global-right input {
+  width: 260px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.avatar {
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #c7d2fe;
+}
+
+.topbar,
+.top-nav {
+  display: none;
+}
+
+.interaction-banner {
+  margin: 18px auto 0;
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  background: rgba(30, 41, 59, 0.88);
+  color: #e0e7ff;
+}
+
+.dashboard-view,
+.board-panel,
+.planner-layout,
+.docs-workspace,
+.insights-grid {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.dashboard-view {
+  padding: 30px 0 56px;
+}
+
+.dashboard-hero,
+.dashboard-metric,
+.dashboard-panel,
+.board-panel,
+.detail-panel,
+.section-heading,
+.doc-editor-shell,
+.doc-sidebar,
+.unscheduled,
+.calendar,
+.review-panel,
+.insight-card,
+.space-card,
+.jira-sprint-shell,
+.issue-table,
+.timeline-view {
+  border: 1px solid #1e293b;
+  background: rgba(15, 23, 42, 0.68);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(16px);
+}
+
+.dashboard-hero {
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 95% 0%, rgba(99, 102, 241, 0.2), transparent 28rem),
+    rgba(15, 23, 42, 0.76);
+}
+
+.dashboard-hero h2 {
+  color: #f8fafc;
+  font-size: 36px;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-hero p:last-child,
+.dashboard-panel-title span,
+.dashboard-work-card p,
+.doc-mini-card span,
+.timeline-mini-item span,
+.timeline-mini-item small,
+.activity-feed p,
+.activity-feed small {
+  color: #94a3b8;
+}
+
+.eyebrow {
+  color: #818cf8 !important;
+}
+
+.dashboard-metric,
+.dashboard-panel {
+  border-radius: 12px;
+}
+
+.dashboard-metric span,
+.dashboard-metric small {
+  color: #64748b;
+}
+
+.dashboard-metric strong,
+.dashboard-panel-title h3,
+.dashboard-work-card strong,
+.doc-mini-card strong,
+.timeline-mini-item strong {
+  color: #f8fafc;
+}
+
+.dashboard-actions button,
+.dashboard-panel-title button,
+.ghost-button,
+.text-button,
+.confluence-actions button {
+  border: 1px solid #334155;
+  background: rgba(30, 41, 59, 0.86);
+  color: #cbd5e1;
+}
+
+.dashboard-work-card,
+.doc-mini-card,
+.timeline-mini-item,
+.card,
+.issue-table-row,
+.timeline-row,
+.doc-list-item,
+.planner-card {
+  border: 1px solid #1e293b;
+  background: rgba(15, 23, 42, 0.86);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.dashboard-work-card:hover,
+.doc-mini-card:hover,
+.timeline-mini-item:hover,
+.card:hover,
+.issue-table-row:hover,
+.timeline-row:hover,
+.doc-list-item:hover {
+  border-color: #475569;
+  background: rgba(30, 41, 59, 0.82);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
+}
+
+.workspace-grid {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.board-panel,
+.detail-panel {
+  border-radius: 12px;
+}
+
+.jira-breadcrumb,
+.confluence-breadcrumb {
+  color: #64748b;
+}
+
+.project-product-header,
+.project-view-heading {
+  border-bottom-color: #1e293b;
+}
+
+.project-product-header h2,
+.project-view-heading h2,
+.detail-title h2,
+.section-heading h2 {
+  color: #f8fafc;
+  letter-spacing: -0.015em;
+}
+
+.view-switch,
+.jira-view-tabs,
+.board-toolbar,
+.confluence-editor-toolbar {
+  border-color: #1e293b;
+  background: rgba(2, 6, 23, 0.36);
+}
+
+.view-switch button,
+.jira-view-tabs button,
+.confluence-editor-toolbar button {
+  color: #94a3b8;
+}
+
+.view-switch button.active,
+.jira-view-tabs button.active,
+.confluence-editor-toolbar button:hover {
+  background: #1e293b;
+  color: #c7d2fe;
+}
+
+.kanban-board {
+  gap: 18px;
+}
+
+.kanban-column {
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.34);
+}
+
+.kanban-column.drag-over {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.13);
+}
+
+.column-title span,
+.card h3,
+.issue-table-row strong,
+.timeline-row strong {
+  color: #f1f5f9;
+}
+
+.column-title small,
+.card-description,
+.card-project-row,
+.progress-row,
+.due-date,
+.story-points {
+  color: #94a3b8;
+}
+
+.issue-key,
+.issue-type,
+.label-chip,
+.project-badge,
+.chip,
+.priority-mark {
+  border-color: #334155;
+  background: #1e293b;
+  color: #cbd5e1;
+}
+
+.priority-mark {
+  color: #fca5a5;
+}
+
+.progress-track {
+  background: #1e293b;
+}
+
+.progress-track i,
+.sprint-meter i {
+  background: linear-gradient(90deg, #6366f1, #22c55e);
+}
+
+.detail-panel,
+.jira-description-block,
+.activity-panel,
+.field-grid,
+.linked-doc,
+.timer-card {
+  border-color: #1e293b;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.field label,
+.panel-title h3 {
+  color: #e2e8f0;
+}
+
+.field small,
+.jira-description-block p,
+.activity-comment p {
+  color: #94a3b8;
+}
+
+.docs-workspace,
+.planner-layout {
+  padding: 24px 0 48px;
+}
+
+.doc-sidebar {
+  border-radius: 12px;
+}
+
+.doc-editor-shell {
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.doc-title-input {
+  color: #f8fafc !important;
+  background: transparent !important;
+}
+
+.confluence-page-editor {
+  background: transparent;
+}
+
+.confluence-page-body {
+  color: #cbd5e1;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3 {
+  color: #f8fafc;
+}
+
+.markdown-preview p {
+  color: #cbd5e1;
+}
+
+.slash-command,
+.markdown-source-panel,
+.excalidraw-note,
+.excalidraw-loading-state,
+.excalidraw-fallback {
+  border-color: #1e293b;
+  background: rgba(2, 6, 23, 0.45);
+  color: #94a3b8;
+}
+
+.markdown-source-panel .markdown-input {
+  background: rgba(2, 6, 23, 0.66) !important;
+}
+
+.planner-layout {
+  grid-template-columns: 300px minmax(0, 1fr);
+}
+
+.unscheduled,
+.calendar {
+  border-radius: 12px;
+}
+
+.unscheduled h3 {
+  color: #f8fafc;
+}
+
+.calendar-grid {
+  background:
+    linear-gradient(#1e293b 1px, transparent 1px),
+    linear-gradient(90deg, #1e293b 1px, transparent 1px);
+}
+
+.calendar-head,
+.time-cell,
+.calendar-cell {
+  border-color: #1e293b;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.calendar-cell.drag-over {
+  background: rgba(99, 102, 241, 0.18);
+}
+
+.planner-card {
+  border-left: 3px solid var(--project-color, #6366f1);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(15, 23, 42, 0.96));
+}
+
+.planner-card strong {
+  color: #f8fafc;
+}
+
+.resize-handle {
+  border-color: transparent #818cf8 #818cf8 transparent;
+}
+
+.review-input {
+  background: rgba(2, 6, 23, 0.6) !important;
+}
+
+.toast {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.sidebar .sidebar-section,
+.sidebar .quick-capture,
+.sidebar .project-capture {
+  border: 1px solid #1e293b !important;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.58) !important;
+  padding: 12px;
+}
+
+.sidebar .quick-capture,
+.sidebar .project-capture {
+  margin-top: 18px;
+}
+
+.sidebar .jira-card-form,
+.sidebar .project-capture form {
+  border: 1px solid #1e293b !important;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.36) !important;
+  padding: 10px;
+}
+
+.sidebar .project-form-row {
+  align-items: stretch;
+}
+
+.sidebar input,
+.sidebar select,
+.sidebar textarea {
+  border-color: #334155 !important;
+  background: rgba(30, 41, 59, 0.92) !important;
+  color: #e2e8f0 !important;
+}
+
+.sidebar .project-nav-item {
+  background: transparent !important;
+}
+
+.sidebar .project-nav-item.active,
+.sidebar .project-nav-item:hover {
+  background: rgba(30, 41, 59, 0.92) !important;
+}
+
+.sidebar .sidebar-title span {
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #c7d2fe;
+}
+
+@media (max-width: 1200px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #1e293b;
+  }
+
+  .planner-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .main {
+    padding: 0 14px 80px;
+  }
+
+  .global-product-bar {
+    height: auto;
+    align-items: flex-start;
+    padding: 10px 14px;
+  }
+
+  .global-left,
+  .global-right {
+    flex-wrap: wrap;
+  }
+
+  .global-right input {
+    width: 190px;
+  }
+
+  .dashboard-hero {
+    display: grid;
+  }
+}
