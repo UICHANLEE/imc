@@ -1,536 +1,228 @@
-import type { PointerEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
-import { CardDetail } from "./components/CardDetail";
-import { BoardView } from "./components/BoardView";
-import { DashboardView } from "./components/DashboardView";
-import { DocsView } from "./components/DocsView";
-import { InsightsView } from "./components/InsightsView";
-import { PlannerView } from "./components/PlannerView";
+import { useMemo, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
-import { Toast } from "./components/Toast";
-import { TopNavigation } from "./components/TopNavigation";
-import { days, endHour, hourHeight, initialState, startHour, storageKey } from "./data";
+import { Dashboard } from "./components/Dashboard";
+import { Tasks } from "./components/Tasks";
+import { Docs } from "./components/Docs";
+import { Canvas } from "./components/Canvas";
+import { initialState, storageKey } from "./data";
 import { usePersistentState } from "./hooks/usePersistentState";
-import type { AppState, Card, Category, DocPage, DocType, IssueType, Priority, Status, TimerState, View } from "./types";
-import { clamp, formatClock, formatFocus, getMetrics, getProject } from "./utils";
+import type {
+  AppState,
+  BoardPriority,
+  CanvasElement,
+  CanvasNode,
+  Card,
+  DocPage,
+  Status,
+  Task,
+  ViewType
+} from "./types";
 
-type InteractionState = {
-  mode: "moving" | "resizing";
-  title: string;
-  detail: string;
-} | null;
+const statusToTaskStatus = (status: Status): Task["status"] => {
+  if (status === "done") return "done";
+  if (status === "progress" || status === "review") return "in-progress";
+  return "todo";
+};
+
+const taskStatusToStatus = (status: Task["status"]): Status => {
+  if (status === "done") return "done";
+  if (status === "in-progress") return "progress";
+  return "selected";
+};
+
+const priorityToBoardPriority = (priority: Card["priority"]): BoardPriority => {
+  if (priority === "Highest" || priority === "High") return "HIGH";
+  if (priority === "Medium") return "MEDIUM";
+  return "LOW";
+};
+
+const avatarFor = (name: string) => {
+  if (name === "Unassigned") return [];
+  return [`https://i.pravatar.cc/150?u=${encodeURIComponent(name)}`];
+};
+
+const docToCanvasNodes = (doc?: DocPage): CanvasNode[] => {
+  if (!doc || doc.canvasElements.length === 0) {
+    return [
+      { id: "node-1", type: "rectangle", x: 400, y: 300, width: 150, height: 60, text: "Start" },
+      { id: "node-2", type: "ellipse", x: 650, y: 280, width: 180, height: 80, text: "Check Auth" }
+    ];
+  }
+
+  return doc.canvasElements.map((element) => ({
+    id: element.id,
+    type: element.type === "diamond" ? "ellipse" : element.type === "text" || element.type === "note" ? "text" : "rectangle",
+    x: element.x,
+    y: element.y,
+    width: element.width,
+    height: element.height,
+    text: element.text,
+    color: element.color
+  }));
+};
+
+const canvasNodesToElements = (nodes: CanvasNode[]): CanvasElement[] =>
+  nodes.map((node) => ({
+    id: node.id,
+    type: node.type === "ellipse" ? "diamond" : node.type,
+    x: node.x,
+    y: node.y,
+    width: node.width,
+    height: node.height,
+    text: node.text ?? "",
+    color: node.color ?? "#6366f1"
+  }));
 
 export default function App() {
-  const [view, setView] = useState<View>("dashboard");
+  const [currentView, setCurrentView] = useState<ViewType>("dashboard");
   const [state, setState] = usePersistentState<AppState>(storageKey, initialState);
-  const [selectedProjectId, setSelectedProjectId] = useState(initialState.projects[0].id);
-  const [selectedCardId, setSelectedCardId] = useState(initialState.cards[0].id);
-  const [selectedDocId, setSelectedDocId] = useState(initialState.docs[0].id);
-  const [search, setSearch] = useState("");
-  const [issueTypeFilter, setIssueTypeFilter] = useState<"All" | IssueType>("All");
-  const [assigneeFilter, setAssigneeFilter] = useState<"All" | string>("All");
-  const [toast, setToast] = useState("");
-  const [timer, setTimer] = useState<TimerState>({ cardId: null, remaining: 0, running: false });
-  const [interaction, setInteraction] = useState<InteractionState>(null);
-  const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
-  const [plannerInteractionId, setPlannerInteractionId] = useState<string | null>(null);
+  const [selectedDocId, setSelectedDocId] = useState(state.docs[0]?.id ?? "");
 
-  const selectedProject = getProject(state.projects, selectedProjectId);
-  const projectCards = useMemo(() => state.cards.filter((card) => card.projectId === selectedProject.id), [selectedProject.id, state.cards]);
-  const selectedCard = state.cards.find((card) => card.id === selectedCardId) ?? projectCards[0] ?? state.cards[0];
-  const selectedDoc = state.docs.find((doc) => doc.id === selectedCard.documentId) ?? state.docs.find((doc) => doc.cardIds.includes(selectedCard.id));
-  const metrics = useMemo(() => getMetrics(projectCards), [projectCards]);
-  const visibleCards = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return projectCards.filter((card) => {
-      const matchesSearch = !query ||
-        card.id.toLowerCase().includes(query) ||
-        card.title.toLowerCase().includes(query) ||
-        card.labels.some((label) => label.toLowerCase().includes(query));
-      const matchesType = issueTypeFilter === "All" || card.issueType === issueTypeFilter;
-      const matchesAssignee = assigneeFilter === "All" || card.assignee === assigneeFilter;
-      return matchesSearch && matchesType && matchesAssignee;
+  const selectedDoc = state.docs.find((doc) => doc.id === selectedDocId) ?? state.docs[0];
+
+  const tasks = useMemo<Task[]>(() => {
+    return state.cards.map((card) => {
+      const project = state.projects.find((item) => item.id === card.projectId);
+      const linkedDoc = state.docs.find((doc) => doc.id === card.documentId);
+
+      return {
+        id: card.id,
+        cardId: card.id,
+        docId: card.documentId,
+        title: card.title,
+        description: card.description,
+        status: statusToTaskStatus(card.status),
+        priority: priorityToBoardPriority(card.priority),
+        comments: card.subtasks.filter((subtask) => !subtask.done).length,
+        attachments: linkedDoc ? 1 : 0,
+        assignees: avatarFor(card.assignee),
+        assigneeName: card.assignee,
+        projectId: card.projectId,
+        projectName: project?.name,
+        projectColor: project?.color,
+        issueType: card.issueType,
+        startDate: card.startDate,
+        endDate: card.endDate
+      };
     });
-  }, [assigneeFilter, issueTypeFilter, projectCards, search]);
+  }, [state.cards, state.docs, state.projects]);
 
-  useEffect(() => {
-    const cardIsInProject = projectCards.some((card) => card.id === selectedCardId);
-    if (cardIsInProject || projectCards.length === 0) return;
-    setSelectedCardId(projectCards[0].id);
-  }, [projectCards, selectedCardId]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = window.setTimeout(() => setToast(""), 2200);
-    return () => window.clearTimeout(timeout);
-  }, [toast]);
-
-  useEffect(() => {
-    if (!timer.running) return;
-    const interval = window.setInterval(() => {
-      setTimer((current) => {
-        if (current.remaining <= 1) {
-          window.clearInterval(interval);
-          setToast("집중 세션이 끝났어요.");
-          return { ...current, remaining: 0, running: false };
-        }
-        return { ...current, remaining: current.remaining - 1 };
-      });
-    }, 1000);
-    return () => window.clearInterval(interval);
-  }, [timer.running]);
-
-  function updateCard(cardId: string, patch: Partial<Card>) {
+  const handleTaskStatusChange = (taskId: string, status: Task["status"]) => {
     setState((current) => ({
       ...current,
-      cards: current.cards.map((card) => card.id === cardId ? { ...card, ...patch } : card),
-      docs: syncDocsFromCardPatch(current.docs, current.cards.find((card) => card.id === cardId), patch)
+      cards: current.cards.map((card) =>
+        card.id === taskId ? { ...card, status: taskStatusToStatus(status), updatedAt: new Date().toISOString().slice(0, 10) } : card
+      )
     }));
-  }
+  };
 
-  function updateDoc(docId: string, patch: Partial<DocPage>) {
-    setState((current) => ({
-      ...current,
-      docs: current.docs.map((doc) => doc.id === docId ? { ...doc, ...patch } : doc),
-      cards: syncCardsFromDocPatch(current.cards, current.docs.find((doc) => doc.id === docId), patch)
-    }));
-  }
+  const handleCreateTask = (status: Task["status"]) => {
+    const project = state.projects[0];
+    const id = `${project.key}-${Math.floor(Date.now() % 100000)}`;
+    const docId = `DOC-${Date.now().toString(36).toUpperCase()}`;
 
-  function beginDrag(card: Card) {
-    setSelectedCardId(card.id);
-    setDraggingCardId(card.id);
-    setInteraction({
-      mode: "moving",
-      title: card.title,
-      detail: "놓을 컬럼이나 시간 칸 위로 이동하세요"
-    });
-  }
-
-  function clearInteraction() {
-    setDraggingCardId(null);
-    setPlannerInteractionId(null);
-    setInteraction(null);
-  }
-
-  function createProject(name: string, color: string) {
-    const key = name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 3).toUpperCase() || "PRJ";
-    const project = {
-      id: `prj-${Date.now()}`,
-      name,
-      key,
-      color
-    };
-    setState((current) => ({ ...current, projects: [...current.projects, project] }));
-    setSelectedProjectId(project.id);
-    setToast(`${name} 프로젝트를 추가했어요.`);
-  }
-
-  function createCard(input: {
-    title: string;
-    projectId: string;
-    category: Category;
-    issueType: IssueType;
-    priority: Priority;
-    assignee: string;
-    storyPoints: number;
-    minutes: number;
-  }) {
-    const project = state.projects.find((item) => item.id === input.projectId) ?? state.projects[0];
-    const id = `${project.key}-${Math.floor(100 + Math.random() * 900)}`;
-    const docId = `DOC-${state.docs.length + 1}`;
     const card: Card = {
       id,
-      title: input.title,
-      description: "빠른 생성으로 발행된 이슈입니다. 상세 패널에서 설명, 라벨, 서브태스크를 정리하세요.",
-      projectId: input.projectId,
-      category: input.category,
-      issueType: input.issueType,
-      status: "backlog",
-      priority: input.priority,
-      assignee: input.assignee,
+      title: "New Jira-style card",
+      description: "Add scope, dates, assignee, and linked documentation.",
+      projectId: project.id,
+      category: "Product",
+      issueType: "Task",
+      status: taskStatusToStatus(status),
+      priority: "Medium",
+      assignee: "Uichan",
       reporter: "Uichan",
-      sprint: "Backlog",
-      storyPoints: input.storyPoints,
-      startDate: "2026-06-11",
-      endDate: "2026-06-20",
-      dueDate: "2026-06-20",
+      sprint: "Sprint 1",
+      storyPoints: 3,
+      startDate: new Date().toISOString().slice(0, 10),
+      endDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      dueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
       documentId: docId,
-      labels: ["triage"],
-      component: "Inbox",
+      labels: ["new"],
+      component: "Workspace",
       linkedIssueIds: [],
-      subtasks: [
-        { id: `${id}-1`, title: "요구사항 정리", done: false },
-        { id: `${id}-2`, title: "일정 배치", done: false }
-      ],
-      updatedAt: "2026-06-10",
-      minutes: input.minutes,
+      subtasks: [],
+      updatedAt: new Date().toISOString().slice(0, 10),
+      minutes: 50,
       pomodoros: 0,
       day: null,
       start: null,
-      page: `${input.title}에 대한 요구사항, 진행 로그, 회고를 기록하는 연결 페이지입니다.`
+      page: "Linked Markdown document is ready."
     };
 
-    setState((current) => ({
-      ...current,
-      cards: [card, ...current.cards],
-      docs: [{
-        id: docId,
-        title: `${input.title} 노트`,
-        category: input.category,
-        projectId: input.projectId,
-        type: "markdown",
-        body: `# ${input.title}\n\n## Context\n새 카드에서 자동 생성된 문서입니다.\n\n## Decisions\n- 결정 사항을 정리하세요.\n\n## Next actions\n- [ ] 다음 액션 추가`,
-        canvasElements: [],
-        cardIds: [id]
-      }, ...current.docs]
-    }));
-    setSelectedCardId(id);
-    setSelectedDocId(docId);
-    setSelectedProjectId(input.projectId);
-    setToast("새 카드를 발행했어요.");
-  }
-
-  function moveCard(cardId: string, status: Status) {
-    updateCard(cardId, { status });
-    clearInteraction();
-    setToast("카드 상태를 변경했어요.");
-  }
-
-  function scheduleCard(cardId: string, day: number, start: number) {
-    updateCard(cardId, { day, start });
-    setSelectedCardId(cardId);
-    clearInteraction();
-    setToast(`${days[day]}요일 ${formatClock(start * 60)}에 배치했어요.`);
-  }
-
-  function autoSchedule() {
-    let day = 0;
-    let hour = 10;
-    setState((current) => ({
-      ...current,
-      cards: current.cards.map((card) => {
-        if (card.projectId !== selectedProject.id || card.day !== null) return card;
-        const scheduled = { ...card, day, start: hour };
-        hour += Math.ceil(card.minutes / 60);
-        if (hour >= 17) {
-          day = (day + 1) % days.length;
-          hour = 10;
-        }
-        return scheduled;
-      })
-    }));
-    setToast("배치되지 않은 카드를 빈 시간에 자동 배치했어요.");
-  }
-
-  function startTimer(card: Card) {
-    setTimer({ cardId: card.id, remaining: card.minutes * 60, running: true });
-    updateCard(card.id, { pomodoros: card.pomodoros + 1 });
-    setToast(`${card.minutes}분 집중을 시작했어요.`);
-  }
-
-  function resetTimer(card: Card) {
-    setTimer({ cardId: card.id, remaining: card.minutes * 60, running: false });
-  }
-
-  function toggleSubtask(cardId: string, subtaskId: string) {
-    setState((current) => ({
-      ...current,
-      cards: current.cards.map((card) => card.id === cardId ? {
-        ...card,
-        subtasks: card.subtasks.map((subtask) => subtask.id === subtaskId ? { ...subtask, done: !subtask.done } : subtask),
-        updatedAt: "2026-06-10"
-      } : card)
-    }));
-  }
-
-  function createDoc(type: DocType) {
-    const project = selectedProject;
     const doc: DocPage = {
-      id: `DOC-${state.docs.length + 1}`,
-      title: type === "markdown" ? "새 Markdown 문서" : "새 Canvas 문서",
+      id: docId,
+      title: `${id} Notes`,
       category: "Product",
       projectId: project.id,
-      type,
-      body: type === "markdown" ? "# 새 문서\n\n- [ ] 내용을 작성하세요." : "",
-      canvasElements: type === "canvas" ? [{
-        id: `el-${Date.now()}`,
-        type: "note",
-        x: 80,
-        y: 80,
-        width: 180,
-        height: 90,
-        text: "새 아이디어",
-        color: project.color
-      }] : [],
-      cardIds: []
+      type: "markdown",
+      body: `# ${id} Notes\n\n## Summary\n- Define acceptance criteria\n- Link related cards\n- Capture decisions`,
+      canvasElements: [],
+      cardIds: [id]
     };
-    setState((current) => ({ ...current, docs: [doc, ...current.docs] }));
-    setSelectedDocId(doc.id);
-    setToast(`${type === "markdown" ? "Markdown" : "Canvas"} 문서를 추가했어요.`);
-  }
 
-  function handlePlannerPointer(event: PointerEvent<HTMLElement>, card: Card) {
-    const target = event.target as HTMLElement;
-    const isResize = target.classList.contains("resize-handle");
-    const grid = document.querySelector(".calendar-grid");
-    if (!grid) return;
+    setState((current) => ({
+      ...current,
+      cards: [...current.cards, card],
+      docs: [...current.docs, doc]
+    }));
+    setSelectedDocId(docId);
+  };
 
-    const bounds = grid.getBoundingClientRect();
-    const startY = event.clientY;
-    const startHeight = event.currentTarget.offsetHeight;
-    const activeElement = event.currentTarget;
-    setSelectedCardId(card.id);
-    setPlannerInteractionId(card.id);
-    setInteraction({
-      mode: isResize ? "resizing" : "moving",
-      title: card.title,
-      detail: isResize ? `${card.minutes}분 블록을 조정 중` : "캘린더 격자에서 새 위치를 찾는 중"
-    });
-    event.preventDefault();
-    activeElement.setPointerCapture(event.pointerId);
+  const handleOpenDoc = (docId?: string) => {
+    if (!docId) return;
+    setSelectedDocId(docId);
+    setCurrentView("docs");
+  };
 
-    function onMove(moveEvent: globalThis.PointerEvent) {
-      if (isResize) {
-        const minutes = clamp(Math.round((startHeight + moveEvent.clientY - startY) / 15) * 15, 30, 240);
-        updateCard(card.id, { minutes });
-        setInteraction({
-          mode: "resizing",
-          title: card.title,
-          detail: `${minutes}분 블록으로 확장 중`
-        });
-        return;
-      }
+  const handleUpdateDocBody = (docId: string, body: string) => {
+    setState((current) => ({
+      ...current,
+      docs: current.docs.map((doc) => (doc.id === docId ? { ...doc, body } : doc))
+    }));
+  };
 
-      const x = moveEvent.clientX - bounds.left - 72;
-      const y = moveEvent.clientY - bounds.top - 43;
-      const dayWidth = Math.max(1, (bounds.width - 72) / 5);
-      const nextDay = clamp(Math.floor(x / dayWidth), 0, 4);
-      const nextStart = clamp(startHour + Math.round(y / hourHeight), startHour, endHour - 1);
-      updateCard(card.id, {
-        day: nextDay,
-        start: nextStart
-      });
-      setInteraction({
-        mode: "moving",
-        title: card.title,
-        detail: `${days[nextDay]}요일 ${formatClock(nextStart * 60)}로 이동 중`
-      });
-    }
-
-    function onUp() {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      if (activeElement.hasPointerCapture(event.pointerId)) {
-        activeElement.releasePointerCapture(event.pointerId);
-      }
-      clearInteraction();
-    }
-
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-  }
+  const handleUpdateCanvasNodes = (nodes: CanvasNode[]) => {
+    if (!selectedDoc) return;
+    setState((current) => ({
+      ...current,
+      docs: current.docs.map((doc) =>
+        doc.id === selectedDoc.id ? { ...doc, type: "canvas", canvasElements: canvasNodesToElements(nodes) } : doc
+      )
+    }));
+  };
 
   return (
-    <div className="app-shell">
-      <Sidebar
-        projects={state.projects}
-        selectedProjectId={selectedProject.id}
-        cards={state.cards}
-        docs={state.docs}
-        view={view}
-        onViewChange={setView}
-        onSelectProject={setSelectedProjectId}
-        onCreateProject={createProject}
-        onCreateCard={createCard}
-      />
+    <div className="flex flex-col md:flex-row min-h-screen bg-slate-950 text-slate-200 selection:bg-indigo-500/30">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <Sidebar currentView={currentView} onChangeView={setCurrentView} />
 
-      <main className="main">
-        <header className="global-product-bar">
-          <div className="global-left">
-            <div className="app-switcher" aria-hidden="true">IM</div>
-            <strong>It's My Calendar</strong>
-            <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}>Home</button>
-            <button className={view === "jira" ? "active" : ""} onClick={() => setView("jira")}>Jira</button>
-            <button className={view === "confluence" ? "active" : ""} onClick={() => setView("confluence")}>Confluence</button>
-            <button className={view === "planner" ? "active" : ""} onClick={() => setView("planner")}>Planner</button>
-            <button className={view === "insights" ? "active" : ""} onClick={() => setView("insights")}>Reports</button>
-            <button className="create-work-button" onClick={() => setView("jira")}>Create</button>
+        <main className="flex-1 overflow-auto bg-slate-950 pb-16 md:pb-0 relative">
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-900/10 via-slate-950 to-slate-950"></div>
+          <div className="relative z-0 h-full w-full">
+            {currentView === "dashboard" && (
+              <Dashboard tasks={tasks} docs={state.docs} onChangeView={setCurrentView} onOpenDoc={handleOpenDoc} />
+            )}
+            {currentView === "tasks" && (
+              <Tasks tasks={tasks} onTaskStatusChange={handleTaskStatusChange} onCreateTask={handleCreateTask} onOpenDoc={handleOpenDoc} />
+            )}
+            {currentView === "docs" && (
+              <Docs
+                docs={state.docs}
+                cards={state.cards}
+                projects={state.projects}
+                selectedDoc={selectedDoc}
+                onSelectDoc={setSelectedDocId}
+                onUpdateDocBody={handleUpdateDocBody}
+                onChangeView={setCurrentView}
+              />
+            )}
+            {currentView === "canvas" && (
+              <Canvas nodes={docToCanvasNodes(selectedDoc)} edges={[]} onNodesChange={handleUpdateCanvasNodes} />
+            )}
           </div>
-          <div className="global-right">
-            <input aria-label="Search" placeholder="Search IMC..." />
-            <button aria-label="Help">?</button>
-            <button aria-label="Settings">⚙</button>
-            <span className="avatar">UI</span>
-          </div>
-        </header>
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">It's My Calendar</p>
-            <h1>{selectedProject.name}</h1>
-            <p className="topbar-subtitle">Jira 카드와 Confluence 문서를 분리된 탭에서 관리하고, 링크된 이슈와 페이지는 자동으로 동기화됩니다.</p>
-          </div>
-          <div className="topbar-actions">
-            <div className="today-chip">
-              <span>프로젝트 집중</span>
-              <strong>{formatFocus(metrics.focusMinutes)}</strong>
-            </div>
-            <div className="today-chip">
-              <span>이슈</span>
-              <strong>{projectCards.length}</strong>
-            </div>
-          </div>
-        </header>
-        <TopNavigation view={view} onViewChange={setView} />
-        {interaction && (
-          <div className={`interaction-banner ${interaction.mode}`} role="status">
-            <strong>{interaction.mode === "moving" ? "이동 중" : "시간 조정 중"}</strong>
-            <span>{interaction.title}</span>
-            <small>{interaction.detail}</small>
-          </div>
-        )}
-
-        {view === "dashboard" && (
-          <DashboardView
-            cards={projectCards}
-            docs={state.docs.filter((doc) => doc.projectId === selectedProject.id)}
-            projects={state.projects}
-            metrics={metrics}
-            onViewChange={setView}
-            onSelectCard={setSelectedCardId}
-            onSelectDoc={setSelectedDocId}
-          />
-        )}
-
-        {view === "jira" && (
-          <section className="workspace-grid">
-            <BoardView
-              cards={visibleCards}
-              projects={state.projects}
-              project={selectedProject}
-              totalCards={projectCards.length}
-              search={search}
-              issueTypeFilter={issueTypeFilter}
-              assigneeFilter={assigneeFilter}
-              onSearchChange={setSearch}
-              onIssueTypeFilterChange={setIssueTypeFilter}
-              onAssigneeFilterChange={setAssigneeFilter}
-              onAutoSchedule={autoSchedule}
-              onMoveCard={moveCard}
-              onSelectCard={setSelectedCardId}
-              draggingCardId={draggingCardId}
-              onCardDragStart={beginDrag}
-              onCardDragEnd={clearInteraction}
-            />
-            <CardDetail
-              card={selectedCard}
-              doc={selectedDoc}
-              docs={state.docs}
-              projects={state.projects}
-              timer={timer}
-              onStart={startTimer}
-              onReset={resetTimer}
-              onUpdate={(cardId, patch) => updateCard(cardId, { ...patch, updatedAt: "2026-06-10" })}
-              onToggleSubtask={toggleSubtask}
-              onOpenDoc={(docId) => {
-                setSelectedDocId(docId);
-                setView("confluence");
-              }}
-            />
-          </section>
-        )}
-
-        {view === "planner" && (
-          <PlannerView
-            cards={projectCards}
-            selectedProjectId={selectedProject.id}
-            projects={state.projects}
-            onSelectCard={setSelectedCardId}
-            onScheduleCard={scheduleCard}
-            onPlannerPointer={handlePlannerPointer}
-            activeCardId={plannerInteractionId}
-            draggingCardId={draggingCardId}
-            interactionMode={interaction?.mode ?? null}
-            onCardDragStart={beginDrag}
-            onCardDragEnd={clearInteraction}
-          />
-        )}
-
-        {view === "confluence" && (
-          <DocsView
-            docs={state.docs}
-            cards={state.cards}
-            projects={state.projects}
-            selectedProjectId={selectedProject.id}
-            selectedDocId={selectedDocId}
-            onSelectDoc={setSelectedDocId}
-            onNewPage={createDoc}
-            onUpdateDoc={updateDoc}
-            onOpenIssue={(cardId) => {
-              const card = state.cards.find((item) => item.id === cardId);
-              if (card) {
-                setSelectedCardId(card.id);
-                setSelectedProjectId(card.projectId);
-                setView("jira");
-              }
-            }}
-          />
-        )}
-
-        {view === "insights" && (
-          <InsightsView
-            metrics={metrics}
-            review={state.review}
-            onReviewChange={(review) => setState((current) => ({ ...current, review }))}
-          />
-        )}
-      </main>
-
-      <Toast message={toast} />
+        </main>
+      </div>
     </div>
   );
-}
-
-function syncDocsFromCardPatch(docs: DocPage[], card: Card | undefined, patch: Partial<Card>) {
-  if (!card) return docs;
-  const nextDocumentId = patch.documentId ?? card.documentId;
-  const projectId = patch.projectId ?? card.projectId;
-  const category = patch.category ?? card.category;
-  const title = patch.title ?? card.title;
-
-  return docs.map((doc) => {
-    const wasLinked = doc.id === card.documentId || doc.cardIds.includes(card.id);
-    const shouldLink = doc.id === nextDocumentId;
-    let cardIds = doc.cardIds;
-
-    if (wasLinked && !shouldLink) {
-      cardIds = cardIds.filter((id) => id !== card.id);
-    }
-    if (shouldLink && !cardIds.includes(card.id)) {
-      cardIds = [...cardIds, card.id];
-    }
-
-    if (!wasLinked && !shouldLink) return doc;
-
-    const patchFromIssue: Partial<DocPage> = { cardIds };
-    if (shouldLink) {
-      patchFromIssue.projectId = projectId;
-      patchFromIssue.category = category;
-      if (patch.title && doc.title === `${card.title} 노트`) {
-        patchFromIssue.title = `${title} 노트`;
-      }
-    }
-
-    return { ...doc, ...patchFromIssue };
-  });
-}
-
-function syncCardsFromDocPatch(cards: Card[], doc: DocPage | undefined, patch: Partial<DocPage>) {
-  if (!doc) return cards;
-  return cards.map((card) => {
-    if (!doc.cardIds.includes(card.id)) return card;
-    const nextPatch: Partial<Card> = {};
-    if (patch.projectId) nextPatch.projectId = patch.projectId;
-    if (patch.category) nextPatch.category = patch.category;
-    return Object.keys(nextPatch).length > 0 ? { ...card, ...nextPatch } : card;
-  });
 }
