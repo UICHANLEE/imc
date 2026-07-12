@@ -46,6 +46,19 @@ export default function App() {
 
   const selectedDoc = state.docs.find((doc) => doc.id === selectedDocId) ?? state.docs[0];
 
+  const saveState = (updater: (current: AppState) => AppState) => {
+    setState((current) => ({
+      ...updater({
+        ...initialState,
+        ...current,
+        version: current.version ?? initialState.version,
+        lastSavedAt: current.lastSavedAt ?? null
+      }),
+      version: initialState.version,
+      lastSavedAt: new Date().toISOString()
+    }));
+  };
+
   const tasks = useMemo<Task[]>(() => {
     return state.cards.map((card) => {
       const project = state.projects.find((item) => item.id === card.projectId);
@@ -74,7 +87,7 @@ export default function App() {
   }, [state.cards, state.docs, state.projects]);
 
   const handleTaskStatusChange = (taskId: string, status: Task["status"]) => {
-    setState((current) => ({
+    saveState((current) => ({
       ...current,
       cards: current.cards.map((card) =>
         card.id === taskId ? { ...card, status: taskStatusToStatus(status), updatedAt: new Date().toISOString().slice(0, 10) } : card
@@ -127,12 +140,13 @@ export default function App() {
       cardIds: [id]
     };
 
-    setState((current) => ({
+    saveState((current) => ({
       ...current,
       cards: [...current.cards, card],
       docs: [...current.docs, doc]
     }));
     setSelectedDocId(docId);
+    return id;
   };
 
   const handleOpenDoc = (docId?: string) => {
@@ -142,7 +156,7 @@ export default function App() {
   };
 
   const handleUpdateCard = (cardId: string, patch: Partial<Card>) => {
-    setState((current) => ({
+    saveState((current) => ({
       ...current,
       cards: current.cards.map((card) =>
         card.id === cardId
@@ -152,15 +166,32 @@ export default function App() {
     }));
   };
 
+  const handleDeleteCard = (cardId: string) => {
+    saveState((current) => {
+      const deletedCard = current.cards.find((card) => card.id === cardId);
+
+      return {
+        ...current,
+        cards: current.cards.filter((card) => card.id !== cardId),
+        docs: current.docs
+          .map((doc) => ({
+            ...doc,
+            cardIds: doc.cardIds.filter((id) => id !== cardId)
+          }))
+          .filter((doc) => doc.id !== deletedCard?.documentId || doc.cardIds.length > 0)
+      };
+    });
+  };
+
   const handleUpdateDoc = (docId: string, patch: Partial<DocPage>) => {
-    setState((current) => ({
+    saveState((current) => ({
       ...current,
       docs: current.docs.map((doc) => (doc.id === docId ? { ...doc, ...patch } : doc))
     }));
   };
 
   const handleUpdateDocBody = (docId: string, body: string) => {
-    setState((current) => ({
+    saveState((current) => ({
       ...current,
       docs: current.docs.map((doc) => {
         if (doc.id !== docId || doc.body === body) return doc;
@@ -235,6 +266,7 @@ export default function App() {
                 onCreateTask={handleCreateTask}
                 onOpenDoc={handleOpenDoc}
                 onUpdateCard={handleUpdateCard}
+                onDeleteCard={handleDeleteCard}
               />
             )}
             {currentView === "docs" && (

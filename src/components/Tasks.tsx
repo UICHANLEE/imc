@@ -17,18 +17,20 @@ interface TasksProps {
   docs: DocPage[];
   projects: Project[];
   onTaskStatusChange: (taskId: string, status: Task["status"]) => void;
-  onCreateTask: (status: Task["status"]) => void;
+  onCreateTask: (status: Task["status"]) => string;
   onOpenDoc: (docId?: string) => void;
   onUpdateCard: (cardId: string, patch: Partial<Card>) => void;
+  onDeleteCard: (cardId: string) => void;
 }
 
 const statusOptions: Status[] = ["backlog", "selected", "progress", "review", "done"];
 const priorityOptions: Priority[] = ["Highest", "High", "Medium", "Low"];
 const issueTypeOptions: IssueType[] = ["Epic", "Story", "Task", "Bug", "Sub-task"];
 
-export function Tasks({ tasks, cards, docs, projects, onTaskStatusChange, onCreateTask, onOpenDoc, onUpdateCard }: TasksProps) {
+export function Tasks({ tasks, cards, docs, projects, onTaskStatusChange, onCreateTask, onOpenDoc, onUpdateCard, onDeleteCard }: TasksProps) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const selectedCard = cards.find((card) => card.id === selectedCardId);
+  const projectName = tasks[0]?.projectName ?? projects[0]?.name ?? "Project";
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -57,9 +59,9 @@ export function Tasks({ tasks, cards, docs, projects, onTaskStatusChange, onCrea
           <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
             <span>Projects</span>
             <span className="text-slate-600">›</span>
-            <span className="font-medium text-slate-300">{tasks[0]?.projectName ?? "App Launch 2.0"}</span>
+            <span className="font-medium text-slate-300">{projectName}</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">{tasks[0]?.projectName ?? "App Launch 2.0"}</h1>
+          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">{projectName}</h1>
           <p className="text-sm text-slate-500 mt-1">Sprint board • {tasks.length} synced cards</p>
         </div>
 
@@ -187,10 +189,18 @@ export function Tasks({ tasks, cards, docs, projects, onTaskStatusChange, onCrea
                               )}
                             </Draggable>
                           ))}
+                          {columnTasks.length === 0 && (
+                            <div className="rounded-lg border border-dashed border-slate-800 bg-slate-900/30 px-4 py-6 text-center text-sm text-slate-500">
+                              No cards yet
+                            </div>
+                          )}
                           {provided.placeholder}
                           <button
                             className="w-full py-2.5 text-sm text-slate-500 hover:text-slate-300 hover:bg-slate-900 border border-transparent hover:border-slate-800 rounded-lg transition-colors flex items-center justify-center gap-2"
-                            onClick={() => onCreateTask(column.id)}
+                            onClick={() => {
+                              const cardId = onCreateTask(column.id);
+                              setSelectedCardId(cardId);
+                            }}
                           >
                             <Plus className="w-4 h-4" /> Add Task
                           </button>
@@ -213,6 +223,10 @@ export function Tasks({ tasks, cards, docs, projects, onTaskStatusChange, onCrea
           onClose={() => setSelectedCardId(null)}
           onOpenDoc={onOpenDoc}
           onSave={(patch) => onUpdateCard(selectedCard.id, patch)}
+          onDelete={() => {
+            onDeleteCard(selectedCard.id);
+            setSelectedCardId(null);
+          }}
         />
       )}
     </div>
@@ -225,7 +239,8 @@ function TaskDetailModal({
   projects,
   onClose,
   onOpenDoc,
-  onSave
+  onSave,
+  onDelete
 }: {
   card: Card;
   docs: DocPage[];
@@ -233,6 +248,7 @@ function TaskDetailModal({
   onClose: () => void;
   onOpenDoc: (docId?: string) => void;
   onSave: (patch: Partial<Card>) => void;
+  onDelete: () => void;
 }) {
   const [draft, setDraft] = useState({
     title: card.title,
@@ -278,6 +294,11 @@ function TaskDetailModal({
       component: draft.component
     });
     onClose();
+  };
+
+  const remove = () => {
+    if (!window.confirm(`${card.id} 카드를 삭제할까요? 연결된 단독 문서도 함께 정리됩니다.`)) return;
+    onDelete();
   };
 
   return (
@@ -393,9 +414,14 @@ function TaskDetailModal({
               Open linked document
             </button>
 
-            <button className="w-full rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 transition-colors" onClick={save}>
-              Save changes
-            </button>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/20 transition-colors" onClick={remove}>
+                Delete
+              </button>
+              <button className="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 transition-colors" onClick={save}>
+                Save
+              </button>
+            </div>
           </aside>
         </div>
       </div>

@@ -91,6 +91,8 @@ export type DocPage = {
 };
 
 export type AppState = {
+  version: number;
+  lastSavedAt: string | null;
   projects: Project[];
   cards: Card[];
   docs: DocPage[];
